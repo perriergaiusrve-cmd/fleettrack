@@ -155,10 +155,15 @@ const URL = "https://script.google.com/macros/s/AKfycbwPXA7UElyGOwDVGMBQOPEB6BUs
 
 // NAVIGATION
 function showPage(page){
-document.getElementById("dashboard").classList.add("hidden");
-document.getElementById("form").classList.add("hidden");
-document.getElementById("history").classList.add("hidden");
-document.getElementById(page).classList.remove("hidden");
+
+const pages = ["dashboard","form","history"];
+
+pages.forEach(p=>{
+document.getElementById(p).style.display = "none";
+});
+
+document.getElementById(page).style.display = "block";
+
 }
 
 // CAMIONS

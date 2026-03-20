@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Suivi Réparations — FleetTrack</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary: #1A1A2E;
+    --accent: #E63946;
+    --accent2: #F4A261;
+    --surface: #F8F7F4;
+    --surface2: #EEECEA;
+    --card: #FFFFFF;
+    --text: #1A1A2E;
+    --text2: #6B6B7A;
+    --border: #E2E0DC;
+    --success: #2D6A4F;
+    --success-bg: #D8F3DC;
+    --warning: #8B5E00;
+    --warning-bg: #FFF3CD;
+    --danger: #9B2226;
+    --danger-bg: #FFE0E0;
+    --info: #14213D;
+    --info-bg: #E8F4FD;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--surface);
+    color: var(--text);
+    min-height: 100vh;
+  }
+  h1,h2,h3,h4 { font-family: 'Syne', sans-serif; }
+
+  /* ===== NAV ===== */
+  .topbar {
+    background: var(--primary);
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 60px;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .topbar-logo { color: white; font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
+  .topbar-logo span { color: var(--accent); }
+  /* Loading bar */
+  #loading-bar {
+    display: none; position: fixed; top: 60px; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--accent) 0%, var(--accent2) 50%, var(--accent) 100%);
+    background-size: 200% 100%;
+    animation: loadslide 1.2s linear infinite;
+    z-index: 200;
+  }
+  @keyframes loadslide { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+  .nav-tabs { display: flex; gap: 4px; }
+  .nav-tab {
+    padding: 8px 16px; border-radius: 8px; cursor: pointer;
+    font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
+    border: none; background: transparent; color: rgba(255,255,255,0.6);
+    transition: all 0.2s;
+  }
+  .nav-tab.active { background: var(--accent); color: white; }
+  .nav-tab:hover:not(.active) { background: rgba(255,255,255,0.1); color: white; }
+
+  /* ===== VIEWS ===== */
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* ===== DASHBOARD ===== */
+  .dashboard { padding: 2rem; max-width: 1400px; margin: 0 auto; }
+  .dash-header { margin-bottom: 2rem; }
+  .dash-header h1 { font-size: 28px; font-weight: 800; color: var(--primary); }
+  .dash-header p { color: var(--text2); margin-top: 4px; font-size: 14px; }
+
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 2rem; }
+  .kpi-card {
+    background: var(--card); border-radius: 16px; padding: 20px;
+    border: 1px solid var(--border); position: relative; overflow: hidden;
+  }
+  .kpi-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+  }
+  .kpi-card.kpi-red::before { background: var(--accent); }
+  .kpi-card.kpi-orange::before { background: var(--accent2); }
+  .kpi-card.kpi-green::before { background: #2D6A4F; }
+  .kpi-card.kpi-blue::before { background: #219EBC; }
+  .kpi-label { font-size: 12px; font-weight: 500; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .kpi-value { font-family: 'Syne', sans-serif; font-size: 36px; font-weight: 800; line-height: 1; }
+  .kpi-sub { font-size: 12px; color: var(--text2); margin-top: 6px; }
+  .kpi-badge {
+    display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 500; margin-top: 6px;
+  }
+
+  .main-grid { display: grid; grid-template-columns: 1fr 380px; gap: 20px; margin-bottom: 2rem; }
+  @media(max-width: 900px) { .main-grid { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--card); border-radius: 16px; padding: 20px;
+    border: 1px solid var(--border);
+  }
+  .card-title { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; }
+  .card-title span { font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 400; color: var(--text2); }
+
+  /* Table */
+  .repair-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .repair-table th { text-align: left; padding: 8px 12px; color: var(--text2); font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); }
+  .repair-table td { padding: 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .repair-table tr:last-child td { border-bottom: none; }
+  .repair-table tr:hover td { background: var(--surface); }
+  .truck-id { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; }
+  .status-pill {
+    display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 500;
+  }
+  .status-urgent { background: var(--danger-bg); color: var(--danger); }
+  .status-encours { background: var(--warning-bg); color: var(--warning); }
+  .status-termine { background: var(--success-bg); color: var(--success); }
+  .status-planifie { background: var(--info-bg); color: var(--info); }
+
+  /* Bar chart trucks */
+  .truck-bars { display: flex; flex-direction: column; gap: 10px; }
+  .truck-bar-row { display: flex; align-items: center; gap: 10px; }
+  .truck-bar-label { font-size: 12px; font-weight: 500; min-width: 70px; }
+  .truck-bar-track { flex: 1; height: 8px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
+  .truck-bar-fill { height: 100%; border-radius: 4px; transition: width 0.8s ease; }
+  .truck-bar-count { font-size: 12px; color: var(--text2); min-width: 30px; text-align: right; }
+
+  /* Donut / pie */
+  .donut-wrap { display: flex; align-items: center; gap: 20px; }
+  .donut-legend { flex: 1; }
+  .legend-item { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 13px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+  /* Mechanic perf */
+  .mech-list { display: flex; flex-direction: column; gap: 8px; }
+  .mech-row {
+    display: flex; align-items: center; gap: 12px; padding: 10px 12px;
+    background: var(--surface); border-radius: 10px;
+  }
+  .mech-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 13px;
+    flex-shrink: 0;
+  }
+  .mech-info { flex: 1; }
+  .mech-name { font-weight: 500; font-size: 13px; }
+  .mech-stat { font-size: 11px; color: var(--text2); }
+  .mech-score { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; }
+
+  /* Bottom grid */
+  .bottom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media(max-width: 700px) { .bottom-grid { grid-template-columns: 1fr; } }
+
+  /* Notif badge */
+  .notif-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 20px; height: 20px; background: var(--accent); color: white;
+    border-radius: 50%; font-size: 10px; font-weight: 700; margin-left: 8px;
+  }
+
+  /* ===== MOBILE FORM ===== */
+  .phone-wrap {
+    display: flex; justify-content: center; padding: 2rem;
+    background: var(--surface);
+  }
+  .phone-frame {
+    width: 390px;
+    background: #111;
+    border-radius: 44px;
+    padding: 10px;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.3);
+  }
+  .phone-screen {
+    background: white;
+    border-radius: 36px;
+    overflow: hidden;
+    min-height: 750px;
+    position: relative;
+  }
+  .phone-status-bar {
+    background: var(--primary);
+    padding: 12px 24px 8px;
+    display: flex; justify-content: space-between; align-items: center;
+    color: white; font-size: 11px; font-weight: 500;
+  }
+  .phone-header {
+    background: var(--primary);
+    padding: 0 20px 20px;
+    color: white;
+  }
+  .phone-header h2 { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; margin-bottom: 4px; }
+  .phone-header p { font-size: 12px; opacity: 0.7; }
+
+  .phone-body { padding: 20px; }
+  .form-section { margin-bottom: 20px; }
+  .form-section-title {
+    font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1px; color: var(--text2);
+    margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px solid var(--border);
+  }
+  .form-group { margin-bottom: 14px; }
+  .form-label { font-size: 12px; font-weight: 500; color: var(--text); margin-bottom: 6px; display: block; }
+  .form-input, .form-select, .form-textarea {
+    width: 100%; padding: 12px 14px;
+    border: 1.5px solid var(--border); border-radius: 10px;
+    font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--text);
+    background: white; outline: none; transition: border-color 0.2s;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--primary); }
+  .form-textarea { resize: vertical; min-height: 80px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .priority-select { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .prio-btn {
+    padding: 10px 6px; border: 1.5px solid var(--border); border-radius: 10px;
+    cursor: pointer; text-align: center; font-size: 12px; font-weight: 500;
+    transition: all 0.2s; background: white;
+  }
+  .prio-btn.active-bas { background: var(--info-bg); border-color: #219EBC; color: #14213D; }
+  .prio-btn.active-moyen { background: var(--warning-bg); border-color: #F4A261; color: var(--warning); }
+  .prio-btn.active-urgent { background: var(--danger-bg); border-color: var(--accent); color: var(--danger); }
+
+  .parts-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+  .part-tag {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--surface); border-radius: 8px; padding: 8px 12px;
+    font-size: 13px;
+  }
+  .part-remove { background: none; border: none; cursor: pointer; color: var(--accent); font-size: 16px; padding: 0 4px; }
+  .add-part-btn {
+    width: 100%; padding: 10px; border: 1.5px dashed var(--border); border-radius: 10px;
+    background: none; cursor: pointer; font-size: 13px; color: var(--text2);
+    font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+  }
+  .add-part-btn:hover { border-color: var(--primary); color: var(--primary); }
+
+  .photo-upload {
+    border: 2px dashed var(--border); border-radius: 12px; padding: 24px;
+    text-align: center; cursor: pointer; transition: all 0.2s;
+  }
+  .photo-upload:hover { border-color: var(--primary); background: var(--surface); }
+  .photo-icon { font-size: 32px; margin-bottom: 8px; }
+  .photo-text { font-size: 13px; color: var(--text2); }
+
+  .submit-btn {
+    width: 100%; padding: 16px; background: var(--accent); border: none; border-radius: 14px;
+    color: white; font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700;
+    cursor: pointer; transition: all 0.2s; letter-spacing: 0.3px;
+  }
+  .submit-btn:hover { background: #C1121F; transform: translateY(-1px); }
+  .submit-btn:active { transform: translateY(0); }
+
+  /* Success state */
+  .success-screen {
+    display: none; flex-direction: column; align-items: center; justify-content: center;
+    padding: 40px 24px; text-align: center; min-height: 600px;
+  }
+  .success-icon {
+    width: 80px; height: 80px; background: var(--success-bg); border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 36px; margin-bottom: 24px;
+  }
+  .success-title { font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 800; margin-bottom: 8px; }
+  .success-sub { font-size: 14px; color: var(--text2); line-height: 1.6; margin-bottom: 32px; }
+  .new-btn {
+    padding: 14px 32px; background: var(--primary); border: none; border-radius: 12px;
+    color: white; font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700;
+    cursor: pointer; transition: all 0.2s;
+  }
+
+  /* ===== DETAILS VIEW ===== */
+  .details-view { padding: 2rem; max-width: 900px; margin: 0 auto; }
+  .filter-bar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+  .filter-btn {
+    padding: 8px 16px; border: 1px solid var(--border); border-radius: 20px;
+    background: white; cursor: pointer; font-size: 13px; font-family: 'DM Sans', sans-serif;
+    transition: all 0.2s; color: var(--text);
+  }
+  .filter-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+  .repair-cards { display: flex; flex-direction: column; gap: 12px; }
+  .repair-card {
+    background: var(--card); border-radius: 14px; padding: 16px 20px;
+    border: 1px solid var(--border); display: flex; gap: 16px; align-items: flex-start;
+  }
+  .repair-card-stripe { width: 4px; border-radius: 4px; min-height: 60px; flex-shrink: 0; }
+  .repair-card-body { flex: 1; }
+  .repair-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+  .repair-card-truck { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 16px; }
+  .repair-card-type { font-size: 14px; font-weight: 500; margin-bottom: 4px; }
+  .repair-card-meta { font-size: 12px; color: var(--text2); display: flex; gap: 12px; flex-wrap: wrap; }
+  .repair-card-parts { margin-top: 10px; display: flex; gap: 6px; flex-wrap: wrap; }
+  .part-chip {
+    padding: 3px 10px; background: var(--surface); border-radius: 20px; font-size: 11px;
+    color: var(--text2); border: 1px solid var(--border);
+  }
+
+  /* Tooltip */
+  .tip { position: relative; cursor: help; }
+  .tip::after {
+    content: attr(data-tip); position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
+    background: var(--primary); color: white; font-size: 11px; padding: 4px 8px; border-radius: 6px;
+    white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.2s; margin-bottom: 4px;
+  }
+  .tip:hover::after { opacity: 1; }
+
+  /* Selector camion */
+  .camion-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
+  .camion-btn {
+    padding: 10px 6px; border: 1.5px solid var(--border); border-radius: 10px;
+    cursor: pointer; text-align: center; font-size: 12px; font-weight: 600;
+    font-family: 'Syne', sans-serif; transition: all 0.2s; background: white;
+  }
+  .camion-btn.selected { background: var(--primary); border-color: var(--primary); color: white; }
+
+  @media(max-width: 500px) {
+    .phone-wrap { padding: 0; }
+    .phone-frame { border-radius: 0; width: 100%; }
+    .phone-screen { border-radius: 0; }
+    .dashboard { padding: 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-logo">Fleet<span>Track</span></div>
+<div id="loading-bar"></div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showView('dashboard')">Tableau de bord</button>
+    <button class="nav-tab" onclick="showView('formulaire')">Formulaire mécanicien</button>
+    <button class="nav-tab" onclick="showView('historique')">Historique</button>
+  </div>
+</div>
+
+<!-- ===== DASHBOARD ===== -->
+<div id="view-dashboard" class="view active">
+  <div class="dashboard">
+    <div class="dash-header">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+        <div>
+          <h1>Vue d'ensemble — Parc de camions</h1>
+          <p id="dash-date">Chargement...</p>
+        </div>
+        <button onclick="loadAndRenderDashboard(true)" style="padding:10px 18px;background:var(--primary);color:white;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:6px;">
+          ↻ Actualiser
+        </button>
+      </div>
+    </div>
+
+    <div class="kpi-grid" id="kpi-grid"></div>
+
+    <div class="main-grid">
+      <div class="card">
+        <div class="card-title">Réparations récentes <span>30 derniers jours</span></div>
+        <div style="overflow-x:auto;">
+          <table class="repair-table" id="recent-table">
+            <thead>
+              <tr>
+                <th>Camion</th>
+                <th>Type</th>
+                <th>Mécanicien</th>
+                <th>Priorité</th>
+                <th>Statut</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody id="recent-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:16px;">
+        <div class="card">
+          <div class="card-title">Répartition par statut</div>
+          <div class="donut-wrap">
+            <canvas id="donut-canvas" width="100" height="100"></canvas>
+            <div class="donut-legend" id="donut-legend"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Réparations par marque</div>
+          <div class="truck-bars" id="truck-bars"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bottom-grid">
+      <div class="card">
+        <div class="card-title">Performance mécaniciens</div>
+        <div class="mech-list" id="mech-list"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Types de pannes <span>% du total</span></div>
+        <div id="panne-bars"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== FORMULAIRE MOBILE ===== -->
+<div id="view-formulaire" class="view">
+  <div class="phone-wrap">
+    <div class="phone-frame">
+      <div class="phone-screen">
+        <div id="form-main">
+          <div class="phone-status-bar">
+            <span id="phone-time">09:41</span>
+            <span>●●●</span>
+          </div>
+          <div class="phone-header">
+            <h2>Rapport de réparation</h2>
+            <p>Remplir et envoyer à la direction</p>
+          </div>
+          <div class="phone-body">
+
+            <div class="form-section">
+              <div class="form-section-title">Identification</div>
+              <div class="form-group">
+                <label class="form-label">Mécanicien</label>
+                <select class="form-select" id="f-mech">
+                  <option value="">— Sélectionner —</option>
+                  <option>Jean-François ROBERT</option>
+                  <option>Julian PAPOU</option>
+                  <option>Laurent MOREL</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Véhicule concerné</label>
+                <select class="form-select" id="f-camion" onchange="onCamionSelect(this)">
+                  <option value="">— Sélectionner le véhicule —</option>
+                  <optgroup label="CELLULES">
+                    <option value="FM-628-NX|RENAULT|CELLULE">FM-628-NX — RENAULT Cellule</option>
+                    <option value="FM-624-NX|RENAULT|CELLULE">FM-624-NX — RENAULT Cellule</option>
+                    <option value="FV-833-WC|VOLVO|CELLULE">FV-833-WC — VOLVO Cellule</option>
+                    <option value="GW-963-PN|IVECO|CELLULE">GW-963-PN — IVECO Cellule</option>
+                    <option value="HB-829-MB|VOLVO|CELLULE">HB-829-MB — VOLVO Cellule</option>
+                    <option value="HD-459-MY|VOLVO|CELLULE">HD-459-MY — VOLVO Cellule</option>
+                    <option value="HF-987-PQ|MERCEDES|CELLULE">HF-987-PQ — MERCEDES Cellule</option>
+                    <option value="GQ-753-ST|MERCEDES|CELLULE">GQ-753-ST — MERCEDES Cellule</option>
+                    <option value="FC-667-SR|VOLVO|CELLULE">FC-667-SR — VOLVO Cellule</option>
+                    <option value="FB-208-HP|VOLVO|CELLULE">FB-208-HP — VOLVO Cellule</option>
+                    <option value="EV-985-YF|SCANIA|CELLULE">EV-985-YF — SCANIA Cellule</option>
+                    <option value="CH-220-ZN|SCANIA|CELLULE">CH-220-ZN — SCANIA Cellule</option>
+                    <option value="BJ-752-FJ|SCANIA|CELLULE">BJ-752-FJ — SCANIA Cellule</option>
+                    <option value="GW-647-PG|IVECO|CELLULE">GW-647-PG — IVECO Cellule</option>
+                  </optgroup>
+                  <optgroup label="TRACTEURS">
+                    <option value="CV-181-YK|LECITRAILER|TRACTEUR">CV-181-YK — LECITRAILER Tracteur</option>
+                    <option value="GM-076-WD|IVECO|TRACTEUR">GM-076-WD — IVECO Tracteur</option>
+                    <option value="GM-483-YJ|MERCEDES|TRACTEUR">GM-483-YJ — MERCEDES Tracteur</option>
+                    <option value="BF-558-MB|SCANIA|TRACTEUR">BF-558-MB — SCANIA Tracteur</option>
+                    <option value="GZ-123-QP||TRACTEUR">GZ-123-QP — Tracteur</option>
+                    <option value="HB-807-PM|VOLVO|TRACTEUR">HB-807-PM — VOLVO Tracteur</option>
+                    <option value="DM-855-YH|SCANIA|TRACTEUR">DM-855-YH — SCANIA Tracteur</option>
+                  </optgroup>
+                  <optgroup label="SEMI-REMORQUES">
+                    <option value="BR-266-AG|SCANIA|SEMI REMORQUE">BR-266-AG — SCANIA Semi-remorque</option>
+                    <option value="CT-370-HF|BXL|SEMI REMORQUE">CT-370-HF — BXL Semi-remorque</option>
+                    <option value="CT-779-HE|BXL|SEMI REMORQUE">CT-779-HE — BXL Semi-remorque</option>
+                    <option value="FB-530-SM|SCHMITZ|SEMI REMORQUE">FB-530-SM — SCHMITZ Semi-remorque</option>
+                  </optgroup>
+                  <optgroup label="AMPLIROLL">
+                    <option value="FY-083-QD|LECITRAILER|AMPLIROLL">FY-083-QD — LECITRAILER Ampliroll</option>
+                    <option value="HB-416-VQ|DAF|AMPLIROLL">HB-416-VQ — DAF Ampliroll</option>
+                    <option value="FC-171-XA|VOLVO|AMPLIROLL">FC-171-XA — VOLVO Ampliroll</option>
+                  </optgroup>
+                  <optgroup label="ROLLTAINERS">
+                    <option value="FC-248-HH|TROUILLET|ROLLTAINER">FC-248-HH — TROUILLET Rolltainer</option>
+                    <option value="DV-776-PX|VOLVO|ROLLTAINER">DV-776-PX — VOLVO Rolltainer</option>
+                  </optgroup>
+                </select>
+                <div id="vehicule-badge" style="display:none;margin-top:8px;padding:8px 12px;background:var(--surface);border-radius:8px;font-size:12px;color:var(--text2);"></div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <div class="form-section-title">Réparation</div>
+              <div class="form-group">
+                <label class="form-label">Type de panne</label>
+                <select class="form-select" id="f-type">
+                  <option value="">— Choisir —</option>
+                  <option>Moteur</option>
+                  <option>Freins</option>
+                  <option>Boîte de vitesses</option>
+                  <option>Suspension</option>
+                  <option>Électricité</option>
+                  <option>Pneus / Roues</option>
+                  <option>Climatisation</option>
+                  <option>Hydraulique</option>
+                  <option>Échappement</option>
+                  <option>Carrosserie</option>
+                  <option>Autre</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Description du travail effectué</label>
+                <textarea class="form-textarea" id="f-desc" placeholder="Décrivez les interventions réalisées..."></textarea>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Date d'intervention</label>
+                  <input type="date" class="form-input" id="f-date">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Durée (heures)</label>
+                  <input type="number" class="form-input" id="f-duree" placeholder="ex: 3.5" step="0.5" min="0">
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <div class="form-section-title">Priorité</div>
+              <div class="priority-select">
+                <div class="prio-btn" onclick="selectPrio(this,'Basse','active-bas')">🟢 Basse</div>
+                <div class="prio-btn" onclick="selectPrio(this,'Moyenne','active-moyen')">🟡 Moyenne</div>
+                <div class="prio-btn" onclick="selectPrio(this,'Urgente','active-urgent')">🔴 Urgente</div>
+              </div>
+              <input type="hidden" id="f-prio">
+            </div>
+
+            <div class="form-section">
+              <div class="form-section-title">Pièces utilisées</div>
+              <div class="parts-list" id="parts-list"></div>
+              <div style="display:flex; gap:8px;">
+                <input type="text" class="form-input" id="part-input" placeholder="Nom de la pièce..." style="flex:1;">
+                <button class="add-part-btn" style="width:auto; padding: 10px 14px; border-style: solid; border-radius: 10px; background: var(--primary); color: white; border-color: var(--primary);" onclick="addPart()">+</button>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <div class="form-section-title">Coût estimé</div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Main d'œuvre (€)</label>
+                  <input type="number" class="form-input" id="f-mo" placeholder="0">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Pièces (€)</label>
+                  <input type="number" class="form-input" id="f-pieces" placeholder="0">
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <div class="form-section-title">Statut de la réparation</div>
+              <div class="form-group">
+                <select class="form-select" id="f-statut">
+                  <option value="">— Statut —</option>
+                  <option>Terminé</option>
+                  <option>En cours</option>
+                  <option>Pièce en attente</option>
+                  <option>Planifié</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <div class="form-section-title">Photo (optionnel)</div>
+              <div class="photo-upload" onclick="this.style.background='var(--surface2)'">
+                <div class="photo-icon">📷</div>
+                <div class="photo-text">Appuyer pour ajouter une photo</div>
+              </div>
+            </div>
+
+            <button class="submit-btn" onclick="submitForm()">Envoyer à la direction →</button>
+            <div style="height: 24px;"></div>
+          </div>
+        </div>
+
+        <div id="form-success" class="success-screen">
+          <div class="success-icon">✓</div>
+          <div class="success-title">Rapport envoyé !</div>
+          <div class="success-sub">Votre rapport a bien été transmis à la direction. Un récapitulatif sera visible dans le tableau de bord.</div>
+          <button class="new-btn" onclick="resetForm()">Nouveau rapport</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== HISTORIQUE ===== -->
+<div id="view-historique" class="view">
+  <div class="details-view">
+    <div class="dash-header">
+      <h1>Historique des réparations</h1>
+      <p>Toutes les interventions enregistrées</p>
+    </div>
+    <div class="filter-bar">
+      <button class="filter-btn active" onclick="filterHistory('tous', this)">Tous</button>
+      <button class="filter-btn" onclick="filterHistory('Terminé', this)">Terminé</button>
+      <button class="filter-btn" onclick="filterHistory('En cours', this)">En cours</button>
+      <button class="filter-btn" onclick="filterHistory('Pièce en attente', this)">En attente</button>
+      <button class="filter-btn" onclick="filterHistory('Urgente', this)">Urgentes</button>
+    </div>
+    <div class="repair-cards" id="history-cards"></div>
+  </div>
+</div>
+
+<script>
+
+<script>
+// ============================================================
+//  FleetTrack — Version Google Sheets
+//  Remplacer SCRIPT_URL par l'URL de votre Apps Script déployé
+// ============================================================
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxx9WUbIHjl5RPqQHhG6BJJ5UaaA5dhpJ5R_qz9zky7q96pwnuFIKb9QVSbYPyj3X0M4g/exec';
+
+// Cache local pour éviter trop de requêtes
+let cachedRepairs = [];
+let lastFetch = 0;
+
+// ── API Google Sheets ──────────────────────────────────────
+
+async function fetchRepairs(forceRefresh = false) {
+  const now = Date.now();
+  if (!forceRefresh && cachedRepairs.length > 0 && (now - lastFetch) < 60000) {
+    return cachedRepairs;
+  }
+  try {
+    showLoading(true);
+    const resp = await fetch(SCRIPT_URL + '?action=list');
+    const data = await resp.json();
+    cachedRepairs = data.repairs || [];
+    lastFetch = now;
+    return cachedRepairs;
+  } catch(err) {
+    console.error('Erreur lecture Sheets:', err);
+    return cachedRepairs;
+  } finally {
+    showLoading(false);
+  }
+}
+
+async function postRepair(repair) {
+  const resp = await fetch(SCRIPT_URL, {
+    method: 'POST',
+    body: JSON.stringify(repair)
+  });
+  const data = await resp.json();
+  if (data.success) {
+    cachedRepairs.push(repair);
+    lastFetch = 0; // forcer rechargement
+  }
+  return data;
+}
+
+function showLoading(show) {
+  const el = document.getElementById('loading-bar');
+  if (el) el.style.display = show ? 'block' : 'none';
+}
+
+// ── Compatibilité avec le reste du code ───────────────────
+
+function getRepairs() {
+  return cachedRepairs;
+}
+
+function saveRepair(r) {
+  // handled by submitForm async
+}
+
+// ── Navigation ─────────────────────────────────────────────
+
+function showView(v) {
+  document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
+  document.getElementById('view-' + v).classList.add('active');
+  event.target.classList.add('active');
+  if (v === 'dashboard') loadAndRenderDashboard();
+  if (v === 'historique') loadAndRenderHistory();
+}
+
+async function loadAndRenderDashboard() {
+  await fetchRepairs();
+  renderDashboard();
+}
+
+async function loadAndRenderHistory(filter='tous') {
+  await fetchRepairs();
+  renderHistory(filter);
+}
+
+// ── Statuts & couleurs ─────────────────────────────────────
+
+const STATUS_CLASS = {
+  'Terminé': 'status-termine',
+  'En cours': 'status-encours',
+  'Pièce en attente': 'status-urgent',
+  'Planifié': 'status-planifie'
+};
+const PRIO_COLOR = { 'Basse': '#219EBC', 'Moyenne': '#F4A261', 'Urgente': '#E63946' };
+
+// ── Rendu tableau de bord ──────────────────────────────────
+
+function renderDashboard() {
+  const repairs = getRepairs();
+  const now = new Date();
+  document.getElementById('dash-date').textContent =
+    now.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+
+  if (repairs.length === 0) {
+    document.getElementById('kpi-grid').innerHTML = `
+      <div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text2);">
+        <div style="font-size:32px;margin-bottom:12px;">📋</div>
+        <div style="font-weight:500;">Aucune réparation enregistrée</div>
+        <div style="font-size:13px;margin-top:6px;">Les rapports des mécaniciens apparaîtront ici</div>
+      </div>`;
+    document.getElementById('recent-tbody').innerHTML = '';
+    return;
+  }
+
+  const total = repairs.length;
+  const urgent = repairs.filter(r => r.prio === 'Urgente').length;
+  const encours = repairs.filter(r => r.statut === 'En cours' || r.statut === 'Pièce en attente').length;
+  const totalCout = repairs.reduce((s, r) => s + (r.mo || 0) + (r.pieces || 0), 0);
+  const avgDuree = total > 0 ? (repairs.reduce((s, r) => s + (r.duree || 0), 0) / total).toFixed(1) : 0;
+
+  document.getElementById('kpi-grid').innerHTML = `
+    <div class="kpi-card kpi-red">
+      <div class="kpi-label">Total réparations</div>
+      <div class="kpi-value">${total}</div>
+      <div class="kpi-sub">Toutes périodes</div>
+    </div>
+    <div class="kpi-card kpi-orange">
+      <div class="kpi-label">Interventions urgentes</div>
+      <div class="kpi-value">${urgent}</div>
+      <div class="kpi-badge" style="background:var(--danger-bg);color:var(--danger)">${total>0?Math.round(urgent/total*100):0}% du total</div>
+    </div>
+    <div class="kpi-card kpi-green">
+      <div class="kpi-label">En attente / En cours</div>
+      <div class="kpi-value">${encours}</div>
+      <div class="kpi-sub">Véhicules bloqués</div>
+    </div>
+    <div class="kpi-card kpi-blue">
+      <div class="kpi-label">Coût total</div>
+      <div class="kpi-value" style="font-size:26px;">${totalCout.toLocaleString('fr-FR')}€</div>
+      <div class="kpi-sub">Moy. ${avgDuree}h / intervention</div>
+    </div>
+    <div class="kpi-card" style="border-top:4px solid #8B5CF6;">
+      <div class="kpi-label">Parc total</div>
+      <div class="kpi-value">31</div>
+      <div class="kpi-sub">Véhicules enregistrés</div>
+    </div>
+  `;
+
+  const tbody = document.getElementById('recent-tbody');
+  tbody.innerHTML = repairs.slice(-8).reverse().map(r => `
+    <tr>
+      <td><span class="truck-id">${r.camion}</span><br>
+        <span style="font-size:10px;color:var(--text2)">${r.marque||''} ${r.type_veh||''}</span></td>
+      <td>${r.type}</td>
+      <td>${(r.mech||'').split(' ')[0]}</td>
+      <td><span style="font-size:11px;font-weight:500;color:${PRIO_COLOR[r.prio]||'#888'}">${r.prio}</span></td>
+      <td><span class="status-pill ${STATUS_CLASS[r.statut]||''}">${r.statut}</span></td>
+      <td style="color:var(--text2);font-size:12px;">${r.date}</td>
+    </tr>
+  `).join('');
+
+  const statuts = ['Terminé','En cours','Pièce en attente','Planifié'];
+  const sColors = ['#2D6A4F','#F4A261','#E63946','#219EBC'];
+  const sCounts = statuts.map(s => repairs.filter(r => r.statut === s).length);
+  drawDonut(sCounts, sColors);
+  document.getElementById('donut-legend').innerHTML = statuts.map((s,i) => `
+    <div class="legend-item">
+      <div class="legend-dot" style="background:${sColors[i]}"></div>
+      <span style="flex:1;font-size:12px;">${s}</span>
+      <span style="font-weight:600;font-size:13px;">${sCounts[i]}</span>
+      <span style="color:var(--text2);font-size:11px;margin-left:4px;">(${total>0?Math.round(sCounts[i]/total*100):0}%)</span>
+    </div>
+  `).join('');
+
+  const marques = [...new Set(repairs.map(r=>r.marque||'Inconnu'))].sort();
+  const maxM = Math.max(...marques.map(m=>repairs.filter(r=>(r.marque||'Inconnu')===m).length), 1);
+  const marqueCols = {'VOLVO':'#219EBC','SCANIA':'#E63946','IVECO':'#F4A261','MERCEDES':'#2D6A4F','RENAULT':'#8B5CF6','LECITRAILER':'#F97316','BXL':'#14B8A6','SCHMITZ':'#6366F1','TROUILLET':'#EC4899','DAF':'#84CC16','Inconnu':'#888'};
+  document.getElementById('truck-bars').innerHTML = marques.map(m => {
+    const cnt = repairs.filter(r=>(r.marque||'Inconnu')===m).length;
+    const pct = Math.round(cnt/total*100);
+    return `<div class="truck-bar-row">
+      <span class="truck-bar-label" style="font-size:11px;">${m}</span>
+      <div class="truck-bar-track"><div class="truck-bar-fill" style="width:${cnt/maxM*100}%;background:${marqueCols[m]||'#888'}"></div></div>
+      <span class="truck-bar-count">${cnt} <small style="color:var(--text2)">(${pct}%)</small></span>
+    </div>`;
+  }).join('');
+
+  const mechs = [...new Set(repairs.map(r=>r.mech))];
+  const mechColors = ['#E63946','#F4A261','#219EBC','#2D6A4F'];
+  const mechScores = mechs.map(m => {
+    const mrs = repairs.filter(r=>r.mech===m);
+    const done = mrs.filter(r=>r.statut==='Terminé').length;
+    return { name:m, cnt:mrs.length, done, score:mrs.length>0?Math.round(done/mrs.length*100):0 };
+  }).sort((a,b)=>b.score-a.score);
+  document.getElementById('mech-list').innerHTML = mechScores.map((m,i) => `
+    <div class="mech-row">
+      <div class="mech-avatar" style="background:${mechColors[i%4]}22;color:${mechColors[i%4]}">${m.name.split(' ').map(n=>n[0]).join('').slice(0,2)}</div>
+      <div class="mech-info">
+        <div class="mech-name">${m.name}</div>
+        <div class="mech-stat">${m.cnt} interv. · ${m.done} terminées</div>
+      </div>
+      <div class="mech-score" style="color:${m.score>=80?'#2D6A4F':m.score>=50?'#8B5E00':'#9B2226'}">${m.score}%</div>
+    </div>
+  `).join('');
+
+  const types = [...new Set(repairs.map(r=>r.type))];
+  const typeColors = ['#E63946','#F4A261','#219EBC','#2D6A4F','#8B5CF6','#EC4899'];
+  const typeCounts = types.map(t=>({ t, cnt:repairs.filter(r=>r.type===t).length })).sort((a,b)=>b.cnt-a.cnt).slice(0,6);
+  const maxPc = typeCounts.length > 0 ? typeCounts[0].cnt : 1;
+  document.getElementById('panne-bars').innerHTML = typeCounts.map((tc,i) => `
+    <div style="margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:12px;">
+        <span style="font-weight:500;">${tc.t}</span>
+        <span style="color:var(--text2)">${Math.round(tc.cnt/total*100)}%</span>
+      </div>
+      <div style="height:6px;background:var(--surface2);border-radius:4px;overflow:hidden;">
+        <div style="width:${tc.cnt/maxPc*100}%;height:100%;background:${typeColors[i]};border-radius:4px;"></div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function drawDonut(data, colors) {
+  const canvas = document.getElementById('donut-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const total = data.reduce((a,b)=>a+b,0);
+  if (!total) return;
+  let angle = -Math.PI/2;
+  ctx.clearRect(0,0,100,100);
+  data.forEach((val, i) => {
+    if (!val) return;
+    const slice = (val/total)*Math.PI*2;
+    ctx.beginPath(); ctx.moveTo(50,50);
+    ctx.arc(50,50,44,angle,angle+slice);
+    ctx.fillStyle = colors[i]; ctx.fill();
+    angle += slice;
+  });
+  ctx.beginPath(); ctx.arc(50,50,28,0,Math.PI*2);
+  ctx.fillStyle = 'white'; ctx.fill();
+  ctx.fillStyle = '#1A1A2E';
+  ctx.font = 'bold 14px Syne,sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(total, 50, 50);
+}
+
+function renderHistory(filter='tous') {
+  let repairs = getRepairs();
+  if (filter !== 'tous') {
+    if (filter === 'Urgente') repairs = repairs.filter(r=>r.prio==='Urgente');
+    else repairs = repairs.filter(r=>r.statut===filter);
+  }
+  if (repairs.length === 0) {
+    document.getElementById('history-cards').innerHTML = `
+      <div style="text-align:center;padding:60px 20px;color:var(--text2);">
+        <div style="font-size:40px;margin-bottom:12px;">🔧</div>
+        <div style="font-weight:500;font-size:16px;">Aucune réparation</div>
+        <div style="font-size:13px;margin-top:6px;">Utilisez le formulaire mécanicien pour ajouter des rapports</div>
+      </div>`;
+    return;
+  }
+  document.getElementById('history-cards').innerHTML = repairs.slice().reverse().map(r => `
+    <div class="repair-card">
+      <div class="repair-card-stripe" style="background:${PRIO_COLOR[r.prio]||'#ccc'}"></div>
+      <div class="repair-card-body">
+        <div class="repair-card-header">
+          <div>
+            <span class="repair-card-truck">${r.camion}</span>
+            <span style="font-size:11px;color:var(--text2);margin-left:8px;">${r.marque||''} ${r.type_veh||''}</span>
+          </div>
+          <span class="status-pill ${STATUS_CLASS[r.statut]||''}">${r.statut}</span>
+        </div>
+        <div class="repair-card-type">${r.type}</div>
+        <div style="font-size:13px;color:var(--text2);margin:4px 0 8px;">${r.desc}</div>
+        <div class="repair-card-meta">
+          <span>👤 ${(r.mech||'').split(' ')[0]}</span>
+          <span>📅 ${r.date}</span>
+          <span>⏱ ${r.duree}h</span>
+          <span>💶 ${((r.mo||0)+(r.pieces||0)).toLocaleString('fr-FR')}€</span>
+          <span style="color:${PRIO_COLOR[r.prio]||'#888'};font-weight:500">⚑ ${r.prio}</span>
+        </div>
+        ${r.parts && r.parts.length > 0 ? `<div class="repair-card-parts">${r.parts.map(p=>`<span class="part-chip">${p}</span>`).join('')}</div>` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+function filterHistory(f, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderHistory(f);
+}
+
+// ── Formulaire mécanicien ──────────────────────────────────
+
+let selectedCamion = '';
+let selectedMarque = '';
+let selectedTypeVeh = '';
+let selectedPrio = '';
+let parts = [];
+
+function onCamionSelect(sel) {
+  const val = sel.value;
+  const badge = document.getElementById('vehicule-badge');
+  if (!val) { badge.style.display='none'; return; }
+  const p = val.split('|');
+  const plaque = p[0], marque = p[1]||'', typeVeh = p[2]||'';
+  badge.style.display = 'block';
+  badge.innerHTML = `<strong style="color:var(--text);font-size:13px;">${plaque}</strong> &nbsp;·&nbsp; ${marque} &nbsp;·&nbsp; ${typeVeh}`;
+  selectedCamion = plaque;
+  selectedMarque = marque;
+  selectedTypeVeh = typeVeh;
+}
+
+function selectPrio(el, val, cls) {
+  document.querySelectorAll('.prio-btn').forEach(b=>b.className='prio-btn');
+  el.className = 'prio-btn ' + cls;
+  selectedPrio = val;
+}
+
+function addPart() {
+  const input = document.getElementById('part-input');
+  const val = input.value.trim();
+  if (!val) return;
+  parts.push(val);
+  input.value = '';
+  renderParts();
+}
+
+function removePart(i) {
+  parts.splice(i,1);
+  renderParts();
+}
+
+function renderParts() {
+  document.getElementById('parts-list').innerHTML = parts.map((p,i) => `
+    <div class="part-tag">${p}<button class="part-remove" onclick="removePart(${i})">×</button></div>
+  `).join('');
+}
+
+async function submitForm() {
+  const mech = document.getElementById('f-mech').value;
+  const type = document.getElementById('f-type').value;
+  const date = document.getElementById('f-date').value;
+
+  if (!mech || !selectedCamion || !type || !date || !selectedPrio) {
+    alert('Veuillez remplir : mécanicien, véhicule, type de panne, date et priorité.');
+    return;
+  }
+
+  const btn = document.querySelector('.submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'Envoi en cours…';
+
+  const repair = {
+    camion: selectedCamion,
+    marque: selectedMarque,
+    type_veh: selectedTypeVeh,
+    mech,
+    type,
+    desc: document.getElementById('f-desc').value || '—',
+    date,
+    duree: parseFloat(document.getElementById('f-duree').value) || 0,
+    prio: selectedPrio,
+    statut: document.getElementById('f-statut').value || 'Planifié',
+    mo: parseInt(document.getElementById('f-mo').value) || 0,
+    pieces: parseInt(document.getElementById('f-pieces').value) || 0,
+    parts: [...parts]
+  };
+
+  try {
+    const result = await postRepair(repair);
+    if (result.success) {
+      document.getElementById('form-main').style.display = 'none';
+      document.getElementById('form-success').style.display = 'flex';
+    } else {
+      alert('Erreur : ' + (result.error || 'Inconnue'));
+    }
+  } catch(err) {
+    alert('Erreur de connexion. Vérifiez votre URL Apps Script.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Envoyer à la direction →';
+  }
+}
+
+function resetForm() {
+  document.getElementById('form-main').style.display = 'block';
+  document.getElementById('form-success').style.display = 'none';
+  document.getElementById('f-mech').value = '';
+  document.getElementById('f-camion').value = '';
+  document.getElementById('vehicule-badge').style.display = 'none';
+  document.getElementById('f-type').value = '';
+  document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('f-desc').value = '';
+  document.getElementById('f-duree').value = '';
+  document.getElementById('f-mo').value = '';
+  document.getElementById('f-pieces').value = '';
+  document.getElementById('f-statut').value = '';
+  document.querySelectorAll('.prio-btn').forEach(b=>b.className='prio-btn');
+  selectedCamion=''; selectedMarque=''; selectedTypeVeh=''; selectedPrio=''; parts=[];
+  renderParts();
+}
+
+// ── Horloge téléphone ──────────────────────────────────────
+function updateClock() {
+  const n = new Date();
+  const el = document.getElementById('phone-time');
+  if (el) el.textContent = n.getHours().toString().padStart(2,'0')+':'+n.getMinutes().toString().padStart(2,'0');
+}
+setInterval(updateClock, 1000);
+updateClock();
+document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
+
+// ── Démarrage ──────────────────────────────────────────────
+loadAndRenderDashboard();
+loadAndRenderHistory();
+
+</script>
+</body>
+</html>

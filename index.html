@@ -22,9 +22,8 @@ cursor:pointer;
 .container {padding:20px;}
 
 .card {
-background:white;padding:15px;
-margin:10px 0;border-radius:10px;
-box-shadow:0 2px 6px rgba(0,0,0,0.1);
+background:white;padding:15px;margin:10px 0;
+border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,0.1);
 }
 
 .hidden {display:none;}
@@ -55,7 +54,6 @@ width:100%;border-collapse:collapse;
 th, td {
 padding:8px;border-bottom:1px solid #ddd;
 }
-
 </style>
 </head>
 
@@ -73,7 +71,9 @@ padding:8px;border-bottom:1px solid #ddd;
 
 <div class="container">
 
+<!-- DASHBOARD -->
 <div id="dashboard">
+
 <h3>Vue d'ensemble</h3>
 
 <div class="kpi">
@@ -84,7 +84,7 @@ padding:8px;border-bottom:1px solid #ddd;
 </div>
 
 <div class="card">
-<h3>Réparations récentes</h3>
+<h3>Réparations</h3>
 <table>
 <thead>
 <tr>
@@ -98,15 +98,53 @@ padding:8px;border-bottom:1px solid #ddd;
 </table>
 </div>
 
+<div class="card"><canvas id="chart"></canvas></div>
+<div class="card"><canvas id="chartCamion"></canvas></div>
+<div class="card"><canvas id="chartPanne"></canvas></div>
+<div class="card"><canvas id="chartMecano"></canvas></div>
+
+</div>
+
+<!-- FORM -->
+<div id="form" class="hidden">
+
 <div class="card">
-<h3>Statut interventions</h3>
-<canvas id="chart"></canvas>
-</div>
+
+<select id="mecanicien">
+<option>Jean-François ROBERT</option>
+<option>Julian PAPOU</option>
+<option>Laurent MOREL</option>
+</select>
+
+<select id="vehicule"></select>
+
+<input id="marque" placeholder="Marque" readonly>
+<input id="type" placeholder="Type" readonly>
+
+<input id="panne" placeholder="Panne">
+<input id="duree" placeholder="Durée">
+
+<select id="priorite">
+<option>Basse</option>
+<option>Moyenne</option>
+<option>Urgente</option>
+</select>
+
+<select id="statut">
+<option>En cours</option>
+<option>Terminé</option>
+</select>
+
+<button class="send" onclick="envoyer()">Envoyer</button>
 
 </div>
 
-<div id="form" class="hidden">FORMULAIRE</div>
-<div id="history" class="hidden"></div>
+</div>
+
+<!-- HISTORIQUE -->
+<div id="history" class="hidden">
+<div id="historyData"></div>
+</div>
 
 </div>
 
@@ -114,18 +152,60 @@ padding:8px;border-bottom:1px solid #ddd;
 
 const URL = "https://script.google.com/macros/s/AKfycbzVRukMQQ0Avv8H2apxs9qjGt7ZmTAavyTw9f63AMudBqG2X0QywCQk1B5oSUZSZ8f0nQ/exec";
 
+// NAVIGATION
 function showPage(p){
 document.getElementById("dashboard").style.display="none";
 document.getElementById("form").style.display="none";
 document.getElementById("history").style.display="none";
-
 document.getElementById(p).style.display="block";
 }
 
-function loadData(){
+// CAMIONS
+const camions = [
+["GW-963-PN","IVECO","CELLULE"],
+["FM-628-NX","RENAULT","CELLULE"],
+["FV-833-WC","VOLVO","AMPLIROLL + G"],
+["BR-266-AG","SCANIA","TRACTEUR"],
+["HB-829-MB","VOLVO","CELLULE"]
+];
 
+camions.forEach(c=>{
+let opt=document.createElement("option");
+opt.value=c[0];
+opt.textContent=c[0];
+vehicule.appendChild(opt);
+});
+
+vehicule.addEventListener("change", ()=>{
+let c=camions.find(x=>x[0]===vehicule.value);
+if(c){
+marque.value=c[1];
+type.value=c[2];
+}
+});
+
+// ENVOI
+function envoyer(){
+
+fetch(URL+"?action=add"
++"&mecanicien="+encodeURIComponent(mecanicien.value)
++"&vehicule="+encodeURIComponent(vehicule.value)
++"&marque="+encodeURIComponent(marque.value)
++"&type="+encodeURIComponent(type.value)
++"&panne="+encodeURIComponent(panne.value)
++"&duree="+encodeURIComponent(duree.value)
++"&priorite="+priorite.value
++"&statut="+statut.value
+);
+
+alert("✅ Envoyé !");
+loadData();
+}
+
+// GRAPHIQUES
 let chartStatut, chartCamion, chartPanne, chartMecano;
 
+// LOAD DATA
 function loadData(){
 
 fetch(URL+"?action=get")
@@ -135,19 +215,16 @@ fetch(URL+"?action=get")
 let html="";
 let total=0, urgent=0, termine=0, heures=0;
 
-let statsCamion = {};
-let statsPanne = {};
-let statsMecano = {};
+let statsCamion={}, statsPanne={}, statsMecano={};
 
 for(let i=1;i<data.length;i++){
 
-let camion = data[i][2];
-let panne = data[i][5];
-let mecano = data[i][1];
-let duree = Number(data[i][7])||0;
+let camion=data[i][2];
+let panne=data[i][5];
+let mecano=data[i][1];
+let duree=Number(data[i][7])||0;
 
-html+=`
-<tr>
+html+=`<tr>
 <td>${camion}</td>
 <td>${mecano}</td>
 <td>${panne}</td>
@@ -160,22 +237,21 @@ if(data[i][11]=="Terminé") termine++;
 heures+=duree;
 
 // CAMION
-if(!statsCamion[camion]){
-statsCamion[camion]={count:0};
-}
-statsCamion[camion].count++;
+if(!statsCamion[camion]) statsCamion[camion]=0;
+statsCamion[camion]++;
 
 // PANNE
 if(!statsPanne[panne]) statsPanne[panne]=0;
 statsPanne[panne]++;
 
 // MECANO
-if(!statsMecano[mecano]){
-statsMecano[mecano]={total:0,done:0};
+if(!statsMecano[mecano]) statsMecano[mecano]={t:0,d:0};
+statsMecano[mecano].t++;
+if(data[i][11]=="Terminé") statsMecano[mecano].d++;
 }
-statsMecano[mecano].total++;
-if(data[i][11]=="Terminé") statsMecano[mecano].done++;
-}
+
+tableData.innerHTML=html;
+historyData.innerHTML=html;
 
 // KPI
 kpiTotal.innerHTML=total+"<br>Total";
@@ -183,51 +259,47 @@ kpiUrgent.innerHTML=urgent+"<br>Urgent";
 kpiTermine.innerHTML=termine+"<br>Terminé";
 kpiHeures.innerHTML=heures+"h<br>Heures";
 
-tableData.innerHTML=html;
-
-// 🔥 DETRUIRE anciens graphiques
+// DESTROY anciens graph
 if(chartStatut) chartStatut.destroy();
 if(chartCamion) chartCamion.destroy();
 if(chartPanne) chartPanne.destroy();
 if(chartMecano) chartMecano.destroy();
 
-// GRAPH STATUT
-chartStatut = new Chart(document.getElementById("chart"),{
+// STATUT
+chartStatut=new Chart(chart,{
 type:'doughnut',
-data:{
-labels:["En cours","Terminé"],
-datasets:[{data:[total-termine,termine]}]
-}
+data:{labels:["En cours","Terminé"],datasets:[{data:[total-termine,termine]}]}
 });
 
-// GRAPH CAMION
-chartCamion = new Chart(document.getElementById("chartCamion"),{
+// CAMION
+chartCamion=new Chart(chartCamion,{
 type:'bar',
-data:{
-labels:Object.keys(statsCamion),
-datasets:[{data:Object.values(statsCamion).map(c=>c.count)}]
-}
+data:{labels:Object.keys(statsCamion),datasets:[{data:Object.values(statsCamion)}]}
 });
 
-// GRAPH PANNE
-chartPanne = new Chart(document.getElementById("chartPanne"),{
+// PANNE
+chartPanne=new Chart(chartPanne,{
 type:'pie',
-data:{
-labels:Object.keys(statsPanne),
-datasets:[{data:Object.values(statsPanne)}]
-}
+data:{labels:Object.keys(statsPanne),datasets:[{data:Object.values(statsPanne)}]}
 });
 
-// GRAPH MECANO
-chartMecano = new Chart(document.getElementById("chartMecano"),{
+// MECANO
+chartMecano=new Chart(chartMecano,{
 type:'bar',
 data:{
 labels:Object.keys(statsMecano),
 datasets:[{
-data:Object.values(statsMecano).map(m=>Math.round((m.done/m.total)*100))
+data:Object.values(statsMecano).map(m=>Math.round((m.d/m.t)*100))
 }]
 }
 });
 
 });
 }
+
+loadData();
+
+</script>
+
+</body>
+</html>

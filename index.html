@@ -329,9 +329,9 @@
   <div class="topbar-logo">Fleet<span>Track</span></div>
 <div id="loading-bar"></div>
   <div class="nav-tabs">
-    <button class="nav-tab active" onclick="showView('dashboard')">Tableau de bord</button>
-    <button class="nav-tab" onclick="showView('formulaire')">Formulaire mécanicien</button>
-    <button class="nav-tab" onclick="showView('historique')">Historique</button>
+    <button class="nav-tab active" onclick="showView('dashboard', this)">Tableau de bord</button>
+    <button class="nav-tab" onclick="showView('formulaire', this)">Formulaire mécanicien</button>
+    <button class="nav-tab" onclick="showView('historique', this)">Historique</button>
   </div>
 </div>
 
@@ -668,11 +668,11 @@ function saveRepair(r) {
 
 // ── Navigation ─────────────────────────────────────────────
 
-function showView(v) {
+function showView(v, btn) {
   document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
   document.getElementById('view-' + v).classList.add('active');
-  event.target.classList.add('active');
+  if (btn) btn.classList.add('active');
   if (v === 'dashboard') loadAndRenderDashboard();
   if (v === 'historique') loadAndRenderHistory();
 }

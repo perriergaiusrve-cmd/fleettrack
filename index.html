@@ -124,6 +124,10 @@ document.getElementById(p).style.display="block";
 
 function loadData(){
 
+let chartStatut, chartCamion, chartPanne, chartMecano;
+
+function loadData(){
+
 fetch(URL+"?action=get")
 .then(r=>r.json())
 .then(data=>{
@@ -131,29 +135,64 @@ fetch(URL+"?action=get")
 let html="";
 let total=0, urgent=0, termine=0, heures=0;
 
+let statsCamion = {};
+let statsPanne = {};
+let statsMecano = {};
+
 for(let i=1;i<data.length;i++){
 
-html+=`<tr>
-<td>${data[i][2]}</td>
-<td>${data[i][1]}</td>
-<td>${data[i][5]}</td>
+let camion = data[i][2];
+let panne = data[i][5];
+let mecano = data[i][1];
+let duree = Number(data[i][7])||0;
+
+html+=`
+<tr>
+<td>${camion}</td>
+<td>${mecano}</td>
+<td>${panne}</td>
 <td>${data[i][11]}</td>
 </tr>`;
 
 total++;
 if(data[i][8]=="Urgente") urgent++;
 if(data[i][11]=="Terminé") termine++;
-heures+=Number(data[i][7])||0;
+heures+=duree;
+
+// CAMION
+if(!statsCamion[camion]){
+statsCamion[camion]={count:0};
+}
+statsCamion[camion].count++;
+
+// PANNE
+if(!statsPanne[panne]) statsPanne[panne]=0;
+statsPanne[panne]++;
+
+// MECANO
+if(!statsMecano[mecano]){
+statsMecano[mecano]={total:0,done:0};
+}
+statsMecano[mecano].total++;
+if(data[i][11]=="Terminé") statsMecano[mecano].done++;
 }
 
-tableData.innerHTML=html;
-
+// KPI
 kpiTotal.innerHTML=total+"<br>Total";
 kpiUrgent.innerHTML=urgent+"<br>Urgent";
 kpiTermine.innerHTML=termine+"<br>Terminé";
 kpiHeures.innerHTML=heures+"h<br>Heures";
 
-new Chart(document.getElementById("chart"),{
+tableData.innerHTML=html;
+
+// 🔥 DETRUIRE anciens graphiques
+if(chartStatut) chartStatut.destroy();
+if(chartCamion) chartCamion.destroy();
+if(chartPanne) chartPanne.destroy();
+if(chartMecano) chartMecano.destroy();
+
+// GRAPH STATUT
+chartStatut = new Chart(document.getElementById("chart"),{
 type:'doughnut',
 data:{
 labels:["En cours","Terminé"],
@@ -161,39 +200,34 @@ datasets:[{data:[total-termine,termine]}]
 }
 });
 
-// GRAPH CAMIONS
-let statsCamion = {};
-
-for(let i=1;i<data.length;i++){
-let camion = data[i][2];
-if(!statsCamion[camion]) statsCamion[camion]=0;
-statsCamion[camion]++;
-}
-
-// création canvas dynamique si pas existant
-if(!document.getElementById("chartCamion")){
-let canvas = document.createElement("canvas");
-canvas.id = "chartCamion";
-document.querySelector("#dashboard").appendChild(canvas);
-}
-
-new Chart(document.getElementById("chartCamion"),{
+// GRAPH CAMION
+chartCamion = new Chart(document.getElementById("chartCamion"),{
 type:'bar',
 data:{
 labels:Object.keys(statsCamion),
+datasets:[{data:Object.values(statsCamion).map(c=>c.count)}]
+}
+});
+
+// GRAPH PANNE
+chartPanne = new Chart(document.getElementById("chartPanne"),{
+type:'pie',
+data:{
+labels:Object.keys(statsPanne),
+datasets:[{data:Object.values(statsPanne)}]
+}
+});
+
+// GRAPH MECANO
+chartMecano = new Chart(document.getElementById("chartMecano"),{
+type:'bar',
+data:{
+labels:Object.keys(statsMecano),
 datasets:[{
-label:"Réparations par camion",
-data:Object.values(statsCamion)
+data:Object.values(statsMecano).map(m=>Math.round((m.done/m.total)*100))
 }]
 }
 });
 
 });
 }
-
-loadData();
-
-</script>
-
-</body>
-</html>

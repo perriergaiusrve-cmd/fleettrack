@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>FleetTrack PRO</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
 body {font-family:Arial;margin:0;background:#f3f4f6;}
@@ -23,6 +24,7 @@ cursor:pointer;
 .card {
 background:white;padding:15px;
 margin:10px 0;border-radius:10px;
+box-shadow:0 2px 6px rgba(0,0,0,0.1);
 }
 
 .hidden {display:none;}
@@ -34,6 +36,26 @@ width:100%;padding:8px;margin:5px 0;
 button.send {
 background:green;color:white;padding:10px;width:100%;
 }
+
+.kpi {
+display:grid;
+grid-template-columns:repeat(4,1fr);
+gap:10px;
+}
+
+.kpi div {
+background:white;padding:15px;border-radius:10px;
+text-align:center;font-weight:bold;
+}
+
+table {
+width:100%;border-collapse:collapse;
+}
+
+th, td {
+padding:8px;border-bottom:1px solid #ddd;
+}
+
 </style>
 </head>
 
@@ -51,53 +73,40 @@ background:green;color:white;padding:10px;width:100%;
 
 <div class="container">
 
-<!-- DASHBOARD -->
 <div id="dashboard">
-<h3>Réparations</h3>
-<div id="tableData"></div>
-</div>
+<h3>Vue d'ensemble</h3>
 
-<!-- FORM -->
-<div id="form" class="hidden">
+<div class="kpi">
+<div id="kpiTotal">0<br>Total</div>
+<div id="kpiUrgent">0<br>Urgent</div>
+<div id="kpiTermine">0<br>Terminé</div>
+<div id="kpiHeures">0h<br>Heures</div>
+</div>
 
 <div class="card">
+<h3>Réparations récentes</h3>
+<table>
+<thead>
+<tr>
+<th>Camion</th>
+<th>Mécano</th>
+<th>Panne</th>
+<th>Statut</th>
+</tr>
+</thead>
+<tbody id="tableData"></tbody>
+</table>
+</div>
 
-<select id="mecanicien">
-<option>Jean-François ROBERT</option>
-<option>Julian PAPOU</option>
-<option>Laurent MOREL</option>
-</select>
-
-<select id="vehicule"></select>
-
-<input id="marque" placeholder="Marque" readonly>
-<input id="type" placeholder="Type" readonly>
-
-<input id="panne" placeholder="Panne">
-
-<input id="duree" placeholder="Durée">
-
-<select id="priorite">
-<option>Basse</option>
-<option>Moyenne</option>
-<option>Urgente</option>
-</select>
-
-<select id="statut">
-<option>En cours</option>
-<option>Terminé</option>
-</select>
-
-<button class="send" onclick="envoyer()">Envoyer</button>
-
+<div class="card">
+<h3>Statut interventions</h3>
+<canvas id="chart"></canvas>
 </div>
 
 </div>
 
-<!-- HISTORIQUE -->
-<div id="history" class="hidden">
-<div id="historyData"></div>
-</div>
+<div id="form" class="hidden">FORMULAIRE</div>
+<div id="history" class="hidden"></div>
 
 </div>
 
@@ -105,7 +114,6 @@ background:green;color:white;padding:10px;width:100%;
 
 const URL = "https://script.google.com/macros/s/AKfycbzVRukMQQ0Avv8H2apxs9qjGt7ZmTAavyTw9f63AMudBqG2X0QywCQk1B5oSUZSZ8f0nQ/exec";
 
-// NAVIGATION
 function showPage(p){
 document.getElementById("dashboard").style.display="none";
 document.getElementById("form").style.display="none";
@@ -114,51 +122,6 @@ document.getElementById("history").style.display="none";
 document.getElementById(p).style.display="block";
 }
 
-// CAMIONS
-const camions = [
-["GW-963-PN","IVECO","CELLULE"],
-["FM-628-NX","RENAULT","CELLULE"],
-["FV-833-WC","VOLVO","AMPLIROLL + G"],
-["BR-266-AG","SCANIA","TRACTEUR"],
-["HB-829-MB","VOLVO","CELLULE"]
-];
-
-// remplir liste
-camions.forEach(c=>{
-let opt=document.createElement("option");
-opt.value=c[0];
-opt.textContent=c[0];
-vehicule.appendChild(opt);
-});
-
-// auto infos
-vehicule.addEventListener("change", ()=>{
-let c=camions.find(x=>x[0]===vehicule.value);
-if(c){
-marque.value=c[1];
-type.value=c[2];
-}
-});
-
-// ENVOI
-function envoyer(){
-
-fetch(URL+"?action=add"
-+"&mecanicien="+mecanicien.value
-+"&vehicule="+vehicule.value
-+"&marque="+marque.value
-+"&type="+type.value
-+"&panne="+panne.value
-+"&duree="+duree.value
-+"&priorite="+priorite.value
-+"&statut="+statut.value
-);
-
-alert("Envoyé !");
-loadData();
-}
-
-// LOAD
 function loadData(){
 
 fetch(URL+"?action=get")
@@ -166,13 +129,64 @@ fetch(URL+"?action=get")
 .then(data=>{
 
 let html="";
+let total=0, urgent=0, termine=0, heures=0;
 
 for(let i=1;i<data.length;i++){
-html+=data[i][2]+" - "+data[i][5]+"<br>";
+
+html+=`<tr>
+<td>${data[i][2]}</td>
+<td>${data[i][1]}</td>
+<td>${data[i][5]}</td>
+<td>${data[i][11]}</td>
+</tr>`;
+
+total++;
+if(data[i][8]=="Urgente") urgent++;
+if(data[i][11]=="Terminé") termine++;
+heures+=Number(data[i][7])||0;
 }
 
 tableData.innerHTML=html;
-historyData.innerHTML=html;
+
+kpiTotal.innerHTML=total+"<br>Total";
+kpiUrgent.innerHTML=urgent+"<br>Urgent";
+kpiTermine.innerHTML=termine+"<br>Terminé";
+kpiHeures.innerHTML=heures+"h<br>Heures";
+
+new Chart(document.getElementById("chart"),{
+type:'doughnut',
+data:{
+labels:["En cours","Terminé"],
+datasets:[{data:[total-termine,termine]}]
+}
+});
+
+// GRAPH CAMIONS
+let statsCamion = {};
+
+for(let i=1;i<data.length;i++){
+let camion = data[i][2];
+if(!statsCamion[camion]) statsCamion[camion]=0;
+statsCamion[camion]++;
+}
+
+// création canvas dynamique si pas existant
+if(!document.getElementById("chartCamion")){
+let canvas = document.createElement("canvas");
+canvas.id = "chartCamion";
+document.querySelector("#dashboard").appendChild(canvas);
+}
+
+new Chart(document.getElementById("chartCamion"),{
+type:'bar',
+data:{
+labels:Object.keys(statsCamion),
+datasets:[{
+label:"Réparations par camion",
+data:Object.values(statsCamion)
+}]
+}
+});
 
 });
 }

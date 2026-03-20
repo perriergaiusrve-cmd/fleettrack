@@ -268,7 +268,17 @@ if(data[i][11]=="Terminé") termine++;
 tableData.innerHTML=html;
 historyData.innerHTML=hist;
 
-// GRAPH
+// STATS CAMIONS
+let statsCamion = {};
+
+for(let i=1;i<data.length;i++){
+let camion = data[i][2];
+
+if(!statsCamion[camion]) statsCamion[camion]=0;
+statsCamion[camion]++;
+}
+
+// GRAPH STATUT
 new Chart(document.getElementById("chart"),{
 type:'doughnut',
 data:{
@@ -277,8 +287,17 @@ datasets:[{data:[enCours,termine]}]
 }
 });
 
-});
+// GRAPH CAMION
+new Chart(document.getElementById("chartCamion"),{
+type:'bar',
+data:{
+labels:Object.keys(statsCamion),
+datasets:[{
+label:"Nb réparations",
+data:Object.values(statsCamion)
+}]
 }
+});
 
 // INIT
 loadData();

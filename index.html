@@ -614,15 +614,15 @@ let lastFetch = 0;
 
 // ── API Google Sheets ──────────────────────────────────────
 
-async function fetchRepairs(forceRefresh = false) {
-  const now = Date.now();
+async function fetchRepairs(forceRefresh) {
+  var now = Date.now();
   if (!forceRefresh && cachedRepairs.length > 0 && (now - lastFetch) < 60000) {
     return cachedRepairs;
   }
   try {
     showLoading(true);
-    const resp = await fetch(SCRIPT_URL + '?action=list');
-    const data = await resp.json();
+    var resp = await fetch(SCRIPT_URL + '?action=list');
+    var data = await resp.json();
     cachedRepairs = data.repairs || [];
     lastFetch = now;
     return cachedRepairs;
@@ -635,16 +635,20 @@ async function fetchRepairs(forceRefresh = false) {
 }
 
 async function postRepair(repair) {
-  const resp = await fetch(SCRIPT_URL, {
-    method: 'POST',
-    body: JSON.stringify(repair)
-  });
-  const data = await resp.json();
-  if (data.success) {
-    cachedRepairs.push(repair);
-    lastFetch = 0; // forcer rechargement
+  try {
+    var encoded = encodeURIComponent(JSON.stringify(repair));
+    var url = SCRIPT_URL + '?action=add&data=' + encoded;
+    var resp = await fetch(url);
+    var data = await resp.json();
+    if (data.success) {
+      cachedRepairs.push(repair);
+      lastFetch = 0;
+    }
+    return data;
+  } catch(err) {
+    console.error('Erreur envoi:', err);
+    return { error: err.message };
   }
-  return data;
 }
 
 function showLoading(show) {

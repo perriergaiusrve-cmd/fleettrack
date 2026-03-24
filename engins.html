@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>FleetTrack ENGINS</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body {font-family:Arial;margin:0;background:#f3f4f6;}
+
+header {
+background:#14532d;color:white;
+padding:15px;display:flex;justify-content:space-between;
+}
+
+nav button {
+margin:5px;padding:10px;border:none;
+background:#166534;color:white;border-radius:5px;
+cursor:pointer;
+}
+
+.container {padding:20px;}
+
+.card {
+background:white;padding:15px;margin:10px 0;
+border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,0.1);
+}
+
+.hidden {display:none;}
+
+input,select {
+width:100%;padding:8px;margin:5px 0;
+}
+
+button.send {
+background:#22c55e;color:white;padding:10px;width:100%;
+}
+
+.kpi {
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:10px;
+}
+
+.kpi div {
+background:white;padding:15px;border-radius:10px;
+text-align:center;font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<h2>🏗️ FleetTrack ENGINS</h2>
+
+<nav>
+<button onclick="showPage('dashboard')">Dashboard</button>
+<button onclick="showPage('form')">Intervention</button>
+<button onclick="showPage('history')">Historique</button>
+</nav>
+</header>
+
+<div class="container">
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+
+<div class="kpi">
+<div id="kpiTotal">0<br>Total</div>
+<div id="kpiUrgent">0<br>Urgent</div>
+<div id="kpiHeures">0h<br>Heures</div>
+</div>
+
+<div class="card"><canvas id="chart"></canvas></div>
+
+</div>
+
+<!-- FORM -->
+<div id="form" class="hidden">
+
+<div class="card">
+
+<select id="mecanicien">
+<option>Jean-François ROBERT</option>
+<option>Julian PAPOU</option>
+<option>Laurent MOREL</option>
+<option>Gaïus PERRIER</option>
+</select>
+
+<select id="machine"></select>
+
+<input id="type" placeholder="Type" readonly>
+
+<input id="panne" placeholder="Panne">
+<input id="duree" placeholder="Durée">
+
+<select id="priorite">
+<option>Basse</option>
+<option>Moyenne</option>
+<option>Urgente</option>
+</select>
+
+<select id="statut">
+<option>En cours</option>
+<option>Terminé</option>
+</select>
+
+<button class="send" onclick="envoyer()">Envoyer</button>
+
+</div>
+
+</div>
+
+<!-- HISTORIQUE -->
+<div id="history" class="hidden">
+<div id="historyData"></div>
+</div>
+
+</div>
+
+<script>
+
+const URL = "https://script.google.com/macros/s/AKfycbz1XnFtZ9TT5J9_TRuVU9SjjGntoAQuYlTAuYUzo8HJjHYyNugnzWkREn1VrEFzWJuK/exec";
+
+// NAV
+function showPage(p){
+dashboard.style.display="none";
+form.style.display="none";
+history.style.display="none";
+document.getElementById(p).style.display="block";
+}
+
+// MACHINES
+const machines = [
+["CHARIOT-19","Chariot élévateur"],
+["CHARIOT-20","Chariot élévateur"],
+["CHARIOT-21","Chariot élévateur"],
+["CHARIOT-22","Chariot élévateur"],
+["CHARIOT-23","Chariot élévateur"],
+["CHARIOT-24","Chariot élévateur"],
+["CHARIOT-25","Chariot élévateur"],
+["CHARIOT-26","Chariot élévateur"],
+["CHARIOT-27","Chariot élévateur"],
+["CHARIOT-28","Chariot élévateur"]
+["KUBOTA-R086","Chargeur"],
+["KUBOTA-R090","Chargeur"],
+["NACELLE-01","Nacelle"],
+["CHARIOT-TELESCO","Chariot"],
+];
+
+machines.forEach(m=>{
+let opt=document.createElement("option");
+opt.value=m[0];
+opt.textContent=m[0]+" - "+m[1];
+machine.appendChild(opt);
+});
+
+machine.addEventListener("change", ()=>{
+let m=machines.find(x=>x[0]===machine.value);
+if(m){ type.value=m[1]; }
+});
+
+// ENVOI
+function envoyer(){
+
+fetch(URL+"?action=add"
++"&mecanicien="+mecanicien.value
++"&machine="+machine.value
++"&type="+type.value
++"&panne="+panne.value
++"&duree="+duree.value
++"&priorite="+priorite.value
++"&statut="+statut.value
+);
+
+alert("✅ Intervention envoyée");
+loadData();
+}
+
+// LOAD
+let chart;
+
+function loadData(){
+
+fetch(URL+"?action=get")
+.then(r=>r.json())
+.then(data=>{
+
+let total=0, urgent=0, heures=0;
+let hist="";
+let stats={};
+
+for(let i=1;i<data.length;i++){
+
+let machine=data[i][2];
+let panne=data[i][4];
+let duree=Number(data[i][5])||0;
+
+total++;
+if(data[i][6]=="Urgente") urgent++;
+heures+=duree;
+
+if(!stats[machine]) stats[machine]=0;
+stats[machine]++;
+
+hist+=`
+<div class="card">
+🏗️ ${machine}<br>
+👨‍🔧 ${data[i][1]}<br>
+🔧 ${panne}<br>
+⏱ ${duree}h<br>
+📌 ${data[i][6]}<br>
+📊 ${data[i][7]}
+</div>`;
+}
+
+historyData.innerHTML=hist;
+
+kpiTotal.innerHTML=total+"<br>Total";
+kpiUrgent.innerHTML=urgent+"<br>Urgent";
+kpiHeures.innerHTML=heures+"h<br>Heures";
+
+if(chart) chart.destroy();
+
+chart=new Chart(chart,{
+type:'bar',
+data:{
+labels:Object.keys(stats),
+datasets:[{data:Object.values(stats)}]
+}
+});
+
+});
+}
+
+loadData();
+
+</script>
+
+</body>
+</html>

@@ -72,7 +72,9 @@ text-align:center;font-weight:bold;
 <div id="kpiHeures">0h<br>Heures</div>
 </div>
 
-<div class="card"><canvas id="chart"></canvas></div>
+<div class="card">
+<canvas id="chart"></canvas>
+</div>
 
 </div>
 
@@ -123,15 +125,16 @@ text-align:center;font-weight:bold;
 
 const URL = "https://script.google.com/macros/s/AKfycbz1XnFtZ9TT5J9_TRuVU9SjjGntoAQuYlTAuYUzo8HJjHYyNugnzWkREn1VrEFzWJuK/exec";
 
-// NAV
+// NAVIGATION CORRIGÉE
 function showPage(p){
-dashboard.style.display="none";
-form.style.display="none";
-history.style.display="none";
+document.getElementById("dashboard").style.display="none";
+document.getElementById("form").style.display="none";
+document.getElementById("history").style.display="none";
+
 document.getElementById(p).style.display="block";
 }
 
-// MACHINES
+// LISTE MACHINES CORRIGÉE
 const machines = [
 ["CHARIOT-19","Chariot élévateur"],
 ["CHARIOT-20","Chariot élévateur"],
@@ -142,21 +145,23 @@ const machines = [
 ["CHARIOT-25","Chariot élévateur"],
 ["CHARIOT-26","Chariot élévateur"],
 ["CHARIOT-27","Chariot élévateur"],
-["CHARIOT-28","Chariot élévateur"]
+["CHARIOT-28","Chariot élévateur"],
 ["KUBOTA-R086","Chargeur"],
 ["KUBOTA-R090","Chargeur"],
 ["NACELLE-01","Nacelle"],
-["CHARIOT-TELESCO","Chariot"],
+["CHARIOT-TELESCO","Chariot"]
 ];
 
+// REMPLISSAGE SELECT
 machines.forEach(m=>{
 let opt=document.createElement("option");
 opt.value=m[0];
 opt.textContent=m[0]+" - "+m[1];
-machine.appendChild(opt);
+document.getElementById("machine").appendChild(opt);
 });
 
-machine.addEventListener("change", ()=>{
+// AUTO TYPE
+document.getElementById("machine").addEventListener("change", ()=>{
 let m=machines.find(x=>x[0]===machine.value);
 if(m){ type.value=m[1]; }
 });
@@ -165,11 +170,11 @@ if(m){ type.value=m[1]; }
 function envoyer(){
 
 fetch(URL+"?action=add"
-+"&mecanicien="+mecanicien.value
-+"&machine="+machine.value
-+"&type="+type.value
-+"&panne="+panne.value
-+"&duree="+duree.value
++"&mecanicien="+encodeURIComponent(mecanicien.value)
++"&machine="+encodeURIComponent(machine.value)
++"&type="+encodeURIComponent(type.value)
++"&panne="+encodeURIComponent(panne.value)
++"&duree="+encodeURIComponent(duree.value)
 +"&priorite="+priorite.value
 +"&statut="+statut.value
 );
@@ -178,7 +183,7 @@ alert("✅ Intervention envoyée");
 loadData();
 }
 
-// LOAD
+// LOAD DATA
 let chart;
 
 function loadData(){
@@ -221,13 +226,17 @@ kpiTotal.innerHTML=total+"<br>Total";
 kpiUrgent.innerHTML=urgent+"<br>Urgent";
 kpiHeures.innerHTML=heures+"h<br>Heures";
 
+// FIX GRAPH
 if(chart) chart.destroy();
 
-chart=new Chart(chart,{
+chart = new Chart(document.getElementById("chart"),{
 type:'bar',
 data:{
 labels:Object.keys(stats),
-datasets:[{data:Object.values(stats)}]
+datasets:[{
+label:"Interventions",
+data:Object.values(stats)
+}]
 }
 });
 

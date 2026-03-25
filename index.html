@@ -257,7 +257,18 @@ html+=`<tr>
 <td>${panne}</td>
 <td>${data[i][11]}</td>
 </tr>`;
-
+  
+// ✅ NOUVEL HISTORIQUE EN CARDS
+hist+=`
+<div class="card">
+🏗️ ${camion}<br>
+👨‍🔧 ${mecano}<br>
+🔧 ${panne}<br>
+⏱ ${duree}h<br>
+📌 ${data[i][6]}<br>
+📊 ${data[i][7]}
+</div>`;
+  
 total++;
 if(data[i][8]=="Urgente") urgent++;
 if(data[i][11]=="Terminé") termine++;

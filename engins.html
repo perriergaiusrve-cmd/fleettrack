@@ -141,7 +141,7 @@ display:none;
 <input id="type" readonly>
 
 <input id="panne" placeholder="Panne">
-<input id="duree" placeholder="Durée">
+<input id="duree" placeholder="Durée (heures)">
 
 <select id="priorite">
 <option>Basse</option>
@@ -172,7 +172,7 @@ display:none;
 document.addEventListener("DOMContentLoaded", function(){
 
 const URL = "https://script.google.com/macros/s/AKfycbzmR2IP9FfILcpBo0T0jIH0WBFNM6LOEq_hcDESbmHSkm2SBu8TqDJRdLeMVTubio2J/exec";
-  
+
 const machine = document.getElementById("machine");
 const type = document.getElementById("type");
 const mecanicien = document.getElementById("mecanicien");
@@ -189,7 +189,6 @@ window.showPage = function(p){
 document.getElementById("dashboard").style.display = "none";
 document.getElementById("form").style.display = "none";
 document.getElementById("history").style.display = "none";
-
 document.getElementById(p).style.display = "block";
 window.scrollTo(0,0);
 }
@@ -228,6 +227,11 @@ type.value = machines[0][1];
 
 window.envoyer = function(){
 
+if(!panne.value || !duree.value){
+alert("Remplis tous les champs !");
+return;
+}
+
 const url = URL+"?action=add"
 +"&mecanicien="+encodeURIComponent(mecanicien.value)
 +"&machine="+encodeURIComponent(machine.value)
@@ -241,6 +245,8 @@ fetch(url)
 .then(res=>res.text())
 .then(()=>{
 alert("✅ Envoyé !");
+panne.value="";
+duree.value="";
 loadData();
 })
 .catch(()=>{
@@ -263,43 +269,58 @@ let stats={};
 
 for(let i=1;i<data.length;i++){
 
-let machineName=data[i][2];
-let panne=data[i][4];
-let dureeVal=Number(data[i][5])||0;
+let mecanicien = data[i][1];
+let machineName = data[i][2];
+let panneVal = data[i][4];
+let dureeVal = Number(data[i][5]) || 0;
+let prioriteVal = data[i][6];
 
 total++;
-if(data[i][6]=="Urgente") urgent++;
-heures+=dureeVal;
+if(prioriteVal === "Urgente") urgent++;
+heures += dureeVal;
 
 if(!stats[machineName]) stats[machineName]=0;
 stats[machineName]++;
 
-hist+=`
+hist += `
 <div class="card">
-🏗️ ${machineName<br>
-👨‍🔧 ${mecano}<br>
-🔧 ${panne}<br>
-⏱ ${duree}h
+🏗️ ${machineName}<br>
+👨‍🔧 ${mecanicien}<br>
+🔧 ${panneVal}<br>
+⏱ ${dureeVal} h
 </div>`;
+}
 
+historyData.innerHTML = hist;
 
-historyData.innerHTML=hist;
-
-kpiTotal.innerHTML=total+"<br>Total";
-kpiUrgent.innerHTML=urgent+"<br>Urgent";
-kpiHeures.innerHTML=heures+"h<br>Heures";
+kpiTotal.innerHTML = total+"<br>Total";
+kpiUrgent.innerHTML = urgent+"<br>Urgent";
+kpiHeures.innerHTML = heures+"h<br>Heures";
 
 if(chart) chart.destroy();
 
-chart=new Chart(document.getElementById("chart"),{
+chart = new Chart(document.getElementById("chart"),{
 type:'bar',
 data:{
 labels:Object.keys(stats),
-datasets:[{data:Object.values(stats)}]
+datasets:[{
+label:"Interventions",
+data:Object.values(stats)
+}]
+},
+options:{
+responsive:true,
+plugins:{
+legend:{display:false}
+}
 }
 });
 
+})
+.catch(()=>{
+alert("❌ Erreur chargement données");
 });
+
 }
 
 loadData();

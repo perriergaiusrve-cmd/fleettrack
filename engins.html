@@ -7,7 +7,6 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-
 body {
 font-family:Arial;
 margin:0;
@@ -15,7 +14,6 @@ background:#f3f4f6;
 font-size:18px;
 }
 
-/* HEADER */
 header {
 background:#14532d;
 color:white;
@@ -23,13 +21,10 @@ padding:15px;
 text-align:center;
 }
 
-/* MENU */
 nav {
 display:flex;
-flex-wrap:wrap;
 gap:10px;
-justify-content:center;
-margin-top:10px;
+padding:10px;
 }
 
 nav button {
@@ -42,12 +37,10 @@ color:white;
 border-radius:10px;
 }
 
-/* CONTAINER */
 .container {
 padding:15px;
 }
 
-/* CARDS */
 .card {
 background:white;
 padding:15px;
@@ -56,7 +49,6 @@ border-radius:12px;
 box-shadow:0 3px 8px rgba(0,0,0,0.1);
 }
 
-/* INPUTS */
 input, select {
 width:100%;
 padding:14px;
@@ -66,7 +58,6 @@ border-radius:8px;
 border:1px solid #ccc;
 }
 
-/* BOUTON */
 button.send {
 background:#22c55e;
 color:white;
@@ -77,7 +68,6 @@ border-radius:10px;
 width:100%;
 }
 
-/* KPI */
 .kpi {
 display:grid;
 grid-template-columns:1fr 1fr;
@@ -92,11 +82,9 @@ text-align:center;
 font-weight:bold;
 }
 
-/* CACHE */
 .hidden {
 display:none;
 }
-
 </style>
 </head>
 
@@ -104,13 +92,13 @@ display:none;
 
 <header>
 <h2>🏗️ FleetTrack ENGINS</h2>
+</header>
 
 <nav>
-<button onclick="showPage('dashboard')">📊 Dashboard</button>
-<button onclick="showPage('form')">🛠 Intervention</button>
-<button onclick="showPage('history')">📋 Historique</button>
+<button onclick="showPage('dashboard')">📊</button>
+<button onclick="showPage('form')">🛠</button>
+<button onclick="showPage('history')">📋</button>
 </nav>
-</header>
 
 <div class="container">
 
@@ -134,7 +122,7 @@ display:none;
 
 <div class="card">
 
-<label>👨‍🔧 Technicien</label>
+<label>Technicien</label>
 <select id="mecanicien">
 <option>Jean-François ROBERT</option>
 <option>Julian PAPOU</option>
@@ -142,32 +130,26 @@ display:none;
 <option>Gaïus PERRIER</option>
 </select>
 
-<label>🚜 Machine</label>
+<label>Machine</label>
 <select id="machine"></select>
 
-<label>Type</label>
 <input id="type" readonly>
 
-<label>🔧 Panne</label>
-<input id="panne" placeholder="Ex: fuite hydraulique">
+<input id="panne" placeholder="Panne">
+<input id="duree" placeholder="Durée">
 
-<label>⏱ Durée (h)</label>
-<input id="duree" placeholder="Ex: 2">
-
-<label>📌 Priorité</label>
 <select id="priorite">
 <option>Basse</option>
 <option>Moyenne</option>
 <option>Urgente</option>
 </select>
 
-<label>📊 Statut</label>
 <select id="statut">
 <option>En cours</option>
 <option>Terminé</option>
 </select>
 
-<button class="send" onclick="envoyer()">📤 Envoyer intervention</button>
+<button class="send" onclick="envoyer()">Envoyer</button>
 
 </div>
 
@@ -185,7 +167,7 @@ display:none;
 document.addEventListener("DOMContentLoaded", function(){
 
 const URL = "https://script.google.com/macros/s/AKfycbywaBVIk-xh7tgWBwHQR4oDLwN75jFSCxWBlQcOIvwmyuLKpZpAA5EPAqUQVXcV-u27/exec";
-
+  
 // ELEMENTS
 const machine = document.getElementById("machine");
 const type = document.getElementById("type");
@@ -199,13 +181,14 @@ const kpiTotal = document.getElementById("kpiTotal");
 const kpiUrgent = document.getElementById("kpiUrgent");
 const kpiHeures = document.getElementById("kpiHeures");
 
-// NAV
-function showPage(p){
-document.getElementById("dashboard").style.display="none";
-document.getElementById("form").style.display="none";
-document.getElementById("history").style.display="none";
+// NAVIGATION FIX
+window.showPage = function(p){
+document.getElementById("dashboard").style.display = "none";
+document.getElementById("form").style.display = "none";
+document.getElementById("history").style.display = "none";
 
-document.getElementById(p).style.display="block";
+document.getElementById(p).style.display = "block";
+window.scrollTo(0,0);
 }
 
 // MACHINES
@@ -226,11 +209,11 @@ const machines = [
 ["NACELLE-01","Nacelle"]
 ];
 
-// REMPLISSAGE
+// SELECT
 machines.forEach(m=>{
 let opt=document.createElement("option");
 opt.value=m[0];
-opt.textContent="🚜 "+m[0]+" ("+m[1]+")";
+opt.textContent=m[0]+" • "+m[1];
 machine.appendChild(opt);
 });
 
@@ -243,7 +226,7 @@ if(m){ type.value=m[1]; }
 machine.selectedIndex = 0;
 type.value = machines[0][1];
 
-// ENVOI
+// ENVOI FIX
 window.envoyer = function(){
 
 const url = URL+"?action=add"
@@ -259,12 +242,12 @@ fetch(url)
 .then(res=>res.text())
 .then(()=>{
 alert("✅ Envoyé !");
-navigator.vibrate(100);
 loadData();
 })
 .catch(()=>{
 alert("❌ Erreur !");
 });
+
 }
 
 // LOAD
@@ -295,12 +278,11 @@ stats[machineName]++;
 
 hist+=`
 <div class="card">
-🏗️ <b>${machineName}</b><br>
-👨‍🔧 ${data[i][1]}<br>
-🔧 ${panne}<br>
-⏱ ${dureeVal}h<br>
-📌 ${data[i][6]}<br>
-📊 ${data[i][7]}
+<b>${machineName}</b><br>
+${data[i][1]}<br>
+${panne}<br>
+${dureeVal}h<br>
+${data[i][6]} - ${data[i][7]}
 </div>`;
 }
 

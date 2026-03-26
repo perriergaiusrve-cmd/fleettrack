@@ -2,62 +2,142 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>FleetTrack ENGINS</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>FleetTrack PRO</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-body {font-family:Arial;margin:0;background:#f3f4f6;}
 
+body {
+font-family:Arial;
+margin:0;
+background:#f3f4f6;
+}
+
+/* HEADER */
 header {
-background:#14532d;color:white;
-padding:15px;display:flex;justify-content:space-between;
+background:#0f172a;
+color:white;
+padding:15px;
+display:flex;
+flex-direction:column;
+gap:10px;
 }
 
-nav button {
-margin:5px;padding:10px;border:none;
-background:#166534;color:white;border-radius:5px;
+nav {
+display:flex;
+flex-wrap:wrap;
+gap:5px;
+}
+
+nav button, nav a {
+flex:1;
+text-align:center;
+padding:10px;
+border:none;
+background:#1e293b;
+color:white;
+border-radius:8px;
 cursor:pointer;
+font-size:14px;
+text-decoration:none;
 }
 
-.container {padding:20px;}
+/* CONTAINER */
+.container {
+padding:15px;
+}
 
+/* CARD */
 .card {
-background:white;padding:15px;margin:10px 0;
-border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,0.1);
+background:white;
+padding:15px;
+margin:10px 0;
+border-radius:12px;
+box-shadow:0 2px 6px rgba(0,0,0,0.1);
+font-size:14px;
+line-height:1.5;
 }
 
-.hidden {display:none;}
-
-input,select {
-width:100%;padding:8px;margin:5px 0;
-}
-
-button.send {
-background:#22c55e;color:white;padding:10px;width:100%;
-}
-
+/* KPI */
 .kpi {
 display:grid;
-grid-template-columns:repeat(3,1fr);
+grid-template-columns:repeat(2,1fr);
 gap:10px;
 }
 
 .kpi div {
-background:white;padding:15px;border-radius:10px;
-text-align:center;font-weight:bold;
+background:white;
+padding:15px;
+border-radius:10px;
+text-align:center;
+font-weight:bold;
 }
+
+/* TABLE */
+.card table {
+display:block;
+overflow-x:auto;
+white-space:nowrap;
+width:100%;
+}
+
+th, td {
+padding:8px;
+border-bottom:1px solid #ddd;
+}
+
+/* FORM */
+input, select {
+width:100%;
+padding:12px;
+margin:8px 0;
+font-size:16px;
+border-radius:8px;
+border:1px solid #ccc;
+}
+
+button.send {
+background:green;
+color:white;
+padding:12px;
+width:100%;
+border:none;
+border-radius:8px;
+font-size:16px;
+}
+
+/* RESPONSIVE PC */
+@media(min-width:768px){
+
+header {
+flex-direction:row;
+justify-content:space-between;
+align-items:center;
+}
+
+.kpi {
+grid-template-columns:repeat(4,1fr);
+}
+
+}
+
+.hidden {display:none;}
+
 </style>
 </head>
 
 <body>
 
 <header>
-<h2>🏗️ FleetTrack ENGINS</h2>
+<h2>FleetTrack</h2>
 
 <nav>
 <button onclick="showPage('dashboard')">Dashboard</button>
-<button onclick="showPage('form')">Intervention</button>
+<button onclick="showPage('form')">Formulaire</button>
 <button onclick="showPage('history')">Historique</button>
+<a href="engins.html">➡️ Engins</a>
 </nav>
 </header>
 
@@ -66,15 +146,34 @@ text-align:center;font-weight:bold;
 <!-- DASHBOARD -->
 <div id="dashboard">
 
+<h3>Vue d'ensemble</h3>
+
 <div class="kpi">
 <div id="kpiTotal">0<br>Total</div>
 <div id="kpiUrgent">0<br>Urgent</div>
+<div id="kpiTermine">0<br>Terminé</div>
 <div id="kpiHeures">0h<br>Heures</div>
 </div>
 
 <div class="card">
-<canvas id="chart"></canvas>
+<h3>Réparations</h3>
+<table>
+<thead>
+<tr>
+<th>Camion</th>
+<th>Mécano</th>
+<th>Panne</th>
+<th>Statut</th>
+</tr>
+</thead>
+<tbody id="tableData"></tbody>
+</table>
 </div>
+
+<div class="card"><canvas id="chart"></canvas></div>
+<div class="card"><canvas id="chartCamion"></canvas></div>
+<div class="card"><canvas id="chartPanne"></canvas></div>
+<div class="card"><canvas id="chartMecano"></canvas></div>
 
 </div>
 
@@ -84,18 +183,19 @@ text-align:center;font-weight:bold;
 <div class="card">
 
 <select id="mecanicien">
-<option>Julian PAPOU</option>
 <option>Jean-François ROBERT</option>
+<option>Julian PAPOU</option>
 <option>Laurent MOREL</option>
 <option>Gaïus PERRIER</option>
 </select>
 
-<select id="machine"></select>
+<select id="vehicule"></select>
 
+<input id="marque" placeholder="Marque" readonly>
 <input id="type" placeholder="Type" readonly>
 
 <input id="panne" placeholder="Panne">
-<input id="duree" placeholder="Durée">
+<input id="duree" placeholder="Durée (h)">
 
 <select id="priorite">
 <option>Basse</option>
@@ -123,55 +223,45 @@ text-align:center;font-weight:bold;
 
 <script>
 
-const URL = "https://script.google.com/macros/s/AKfycbwq8HyfOaHWkrXf1mzffSHeUib9dgo1HujHnXdB-MYiUa2bVvvhfnBp0WhKKQVltd20/exec";
+const URL = "https://script.google.com/macros/s/AKfycbxctfgl9vxCbt6JD6RXvs3e4LcyEleUGpIGjjuM8DFkzOHwDnLbiSFcweoeOjEx84uc/exec";
 
-// NAVIGATION CORRIGÉE
+/* NAVIGATION */
 function showPage(p){
-document.getElementById("dashboard").style.display="none";
-document.getElementById("form").style.display="none";
-document.getElementById("history").style.display="none";
-
+["dashboard","form","history"].forEach(id=>{
+document.getElementById(id).style.display="none";
+});
 document.getElementById(p).style.display="block";
 }
 
-// LISTE MACHINES CORRIGÉE
-const machines = [
-["CHARIOT-19","Chariot élévateur"],
-["CHARIOT-20","Chariot élévateur"],
-["CHARIOT-21","Chariot élévateur"],
-["CHARIOT-22","Chariot élévateur"],
-["CHARIOT-23","Chariot élévateur"],
-["CHARIOT-24","Chariot élévateur"],
-["CHARIOT-25","Chariot élévateur"],
-["CHARIOT-26","Chariot élévateur"],
-["CHARIOT-27","Chariot élévateur"],
-["CHARIOT-28","Chariot élévateur"],
-["KUBOTA-R086","Chargeur"],
-["KUBOTA-R090","Chargeur"],
-["NACELLE-01","Nacelle"],
-["CHARIOT-TELESCO","Chariot"]
+/* CAMIONS */
+const camions = [
+["GW-963-PN","IVECO","CELLULE"],
+["FM-628-NX","RENAULT","CELLULE"],
+["FV-833-WC","VOLVO","AMPLIROLL + G"]
 ];
 
-// REMPLISSAGE SELECT
-machines.forEach(m=>{
+camions.forEach(c=>{
 let opt=document.createElement("option");
-opt.value=m[0];
-opt.textContent=m[0]+" - "+m[1];
-document.getElementById("machine").appendChild(opt);
+opt.value=c[0];
+opt.textContent=c[0];
+vehicule.appendChild(opt);
 });
 
-// AUTO TYPE
-document.getElementById("machine").addEventListener("change", ()=>{
-let m=machines.find(x=>x[0]===machine.value);
-if(m){ type.value=m[1]; }
+vehicule.addEventListener("change", ()=>{
+let c=camions.find(x=>x[0]===vehicule.value);
+if(c){
+marque.value=c[1];
+type.value=c[2];
+}
 });
 
-// ENVOI
+/* ENVOI */
 function envoyer(){
 
 fetch(URL+"?action=add"
 +"&mecanicien="+encodeURIComponent(mecanicien.value)
-+"&machine="+encodeURIComponent(machine.value)
++"&vehicule="+encodeURIComponent(vehicule.value)
++"&marque="+encodeURIComponent(marque.value)
 +"&type="+encodeURIComponent(type.value)
 +"&panne="+encodeURIComponent(panne.value)
 +"&duree="+encodeURIComponent(duree.value)
@@ -179,63 +269,100 @@ fetch(URL+"?action=add"
 +"&statut="+statut.value
 );
 
-alert("✅ Intervention envoyée");
+alert("✅ Envoyé !");
 loadData();
 }
 
-// LOAD DATA
-let chart;
+/* GRAPHIQUES */
+let chartStatut, chartCamion, chartPanne, chartMecano;
 
+/* LOAD DATA */
 function loadData(){
 
 fetch(URL+"?action=get")
 .then(r=>r.json())
 .then(data=>{
 
-let total=0, urgent=0, heures=0;
+let html="";
 let hist="";
-let stats={};
+let total=0, urgent=0, termine=0, heures=0;
+
+let statsCamion={}, statsPanne={}, statsMecano={};
 
 for(let i=1;i<data.length;i++){
 
-let machine=data[i][2];
-let panne=data[i][4];
-let duree=Number(data[i][5])||0;
+let camion=data[i][2];
+let panne=data[i][5];
+let mecano=data[i][1];
+let duree=Number(data[i][7])||0;
 
-total++;
-if(data[i][6]=="Urgente") urgent++;
-heures+=duree;
-
-if(!stats[machine]) stats[machine]=0;
-stats[machine]++;
+html+=`<tr>
+<td>${camion}</td>
+<td>${mecano}</td>
+<td>${panne}</td>
+<td>${data[i][11]}</td>
+</tr>`;
 
 hist+=`
 <div class="card">
-🏗️ ${machine}<br>
-👨‍🔧 ${data[i][1]}<br>
+🏗️ ${camion}<br>
+👨‍🔧 ${mecano}<br>
 🔧 ${panne}<br>
 ⏱ ${duree}h<br>
 📌 ${data[i][6]}<br>
 📊 ${data[i][7]}
 </div>`;
+
+total++;
+if(data[i][8]=="Urgente") urgent++;
+if(data[i][11]=="Terminé") termine++;
+heures+=duree;
+
+if(!statsCamion[camion]) statsCamion[camion]=0;
+statsCamion[camion]++;
+
+if(!statsPanne[panne]) statsPanne[panne]=0;
+statsPanne[panne]++;
+
+if(!statsMecano[mecano]) statsMecano[mecano]={t:0,d:0};
+statsMecano[mecano].t++;
+if(data[i][11]=="Terminé") statsMecano[mecano].d++;
 }
 
+tableData.innerHTML=html;
 historyData.innerHTML=hist;
 
 kpiTotal.innerHTML=total+"<br>Total";
 kpiUrgent.innerHTML=urgent+"<br>Urgent";
+kpiTermine.innerHTML=termine+"<br>Terminé";
 kpiHeures.innerHTML=heures+"h<br>Heures";
 
-// FIX GRAPH
-if(chart) chart.destroy();
+if(chartStatut) chartStatut.destroy();
+if(chartCamion) chartCamion.destroy();
+if(chartPanne) chartPanne.destroy();
+if(chartMecano) chartMecano.destroy();
 
-chart = new Chart(document.getElementById("chart"),{
+chartStatut=new Chart(chart,{
+type:'doughnut',
+data:{labels:["En cours","Terminé"],datasets:[{data:[total-termine,termine]}]}
+});
+
+chartCamion=new Chart(chartCamion,{
+type:'bar',
+data:{labels:Object.keys(statsCamion),datasets:[{data:Object.values(statsCamion)}]}
+});
+
+chartPanne=new Chart(chartPanne,{
+type:'pie',
+data:{labels:Object.keys(statsPanne),datasets:[{data:Object.values(statsPanne)}]}
+});
+
+chartMecano=new Chart(chartMecano,{
 type:'bar',
 data:{
-labels:Object.keys(stats),
+labels:Object.keys(statsMecano),
 datasets:[{
-label:"Interventions",
-data:Object.values(stats)
+data:Object.values(statsMecano).map(m=>Math.round((m.d/m.t)*100))
 }]
 }
 });

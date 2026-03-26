@@ -88,6 +88,20 @@ border-radius:8px;
 font-size:16px;
 }
 
+/* BOUTON REFRESH */
+.refresh-btn {
+background:#2563eb;
+color:white;
+border:none;
+padding:8px 12px;
+border-radius:6px;
+font-size:13px;
+}
+
+.refresh-btn:active {
+transform:scale(0.95);
+}
+
 /* CHART */
 canvas {
 max-height:250px !important;
@@ -118,7 +132,10 @@ display:none;
 <!-- DASHBOARD -->
 <div id="dashboard">
 
+<div style="display:flex;justify-content:space-between;align-items:center;">
 <h3>Vue d'ensemble</h3>
+<button class="refresh-btn" onclick="refreshData(this)">🔄 Rafraîchir</button>
+</div>
 
 <div class="kpi">
 <div id="kpiTotal">0<br>Total</div>
@@ -190,37 +207,12 @@ document.getElementById(p).style.display="block";
 }
 
 /* CAMIONS */
-const camions =  [
+const camions = [
 ["GW-963-PN","IVECO","CELLULE"],
 ["FM-628-NX","RENAULT","CELLULE"],
-["FM-624-NX","RENAULT","CELLULE"],
-["FV-833-WC","VOLVO","AMPLIROLL + G"],
-["FY-083-QD","LECITRAILER","SEMI REMORQUE"],
+["FV-833-WC","VOLVO","AMPLIROLL"],
 ["BR-266-AG","SCANIA","TRACTEUR"],
-["CV-181-YK","LECITRAILER","PLATEAUX"],
-["GW-647-PG","IVECO","CELLULE"],
-["HB-829-MB","VOLVO","CELLULE"],
-["CH-220-ZN","SCANIA","TRACTEUR"],
-["GM-076-WD","IVECO","CELLULE"],
-["HD-459-MY","VOLVO","TRACTEUR"],
-["GM-483-YJ","MERCEDES","CELLULE"],
-["BJ-752-FJ","SCANIA","AMPLIROLL + G"],
-["FB-208-HP","VOLVO","CELLULE"],
-["GQ-753-ST","MERCEDES","CELLULE"],
-["HF-987-PQ","MERCEDES","TRACTEUR"],
-["BF-558-MB","SCANIA","CELLULE"],
-["FC-667-SR","VOLVO","TRACTEUR"],
-["GZ-123-QP","INCONNU","SEMI REMORQUE"],
-["CT-370-HF","BXL","ROLLTAINER"],
-["FC-248-HH","TROUILLET","SEMI REMORQUE"],
-["DM-855-YH","SCANIA","TRACTEUR"],
-["FB-530-SM","SCHMITZ","SEMI REMORQUE"],
-["CT-779-HE","BXL","ROLLTAINER"],
-["DV-776-PX","VOLVO","AMPLIROLL"],
-["HB-416-VQ","DAF","AMPLIROLL"],
-["FC-171-XA","VOLVO","TRACTEUR"],
-["HB-807-PM","VOLVO","CELLULE"],
-["EV-985-YF","SCANIA","CELLULE"]
+["GM-483-YJ","MERCEDES","CELLULE"]
 ];
 
 camions.forEach(c=>{
@@ -256,6 +248,18 @@ alert("✅ Envoyé !");
 loadData();
 }
 
+/* REFRESH */
+function refreshData(btn){
+btn.innerText = "⏳...";
+loadData();
+setTimeout(()=>{
+btn.innerText = "🔄 Rafraîchir";
+},800);
+}
+
+/* AUTO REFRESH (optionnel) */
+// setInterval(loadData, 30000);
+
 /* CHARTS */
 let chartStatut, chartCamion, chartPanne, chartMecano;
 
@@ -279,7 +283,6 @@ let panne=data[i][5];
 let mecano=data[i][1];
 let duree=Number(data[i][7])||0;
 
-/* CARTE MOBILE */
 html+=`
 <div class="card">
 🚚 <b>${camion}</b><br>
@@ -288,7 +291,6 @@ html+=`
 📊 ${data[i][11]}
 </div>`;
 
-/* HISTORIQUE */
 hist+=`
 <div class="card">
 🚚 ${camion}<br>

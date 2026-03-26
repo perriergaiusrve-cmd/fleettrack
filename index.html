@@ -2,57 +2,100 @@
 <html>
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>FleetTrack PRO</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-body {font-family:Arial;margin:0;background:#f3f4f6;}
+body {
+font-family:Arial;
+margin:0;
+background:#f3f4f6;
+}
 
+/* HEADER */
 header {
-background:#0f172a;color:white;
-padding:15px;display:flex;justify-content:space-between;
+background:#0f172a;
+color:white;
+padding:15px;
+display:flex;
+flex-direction:column;
 }
 
-nav button {
-margin:5px;padding:10px;border:none;
-background:#1e293b;color:white;border-radius:5px;
-cursor:pointer;
+nav {
+display:flex;
+flex-wrap:wrap;
 }
 
-.container {padding:20px;}
+nav button, nav a {
+flex:1;
+margin:3px;
+padding:10px;
+border:none;
+background:#1e293b;
+color:white;
+border-radius:6px;
+font-size:13px;
+text-align:center;
+}
 
+/* CONTAINER */
+.container {
+padding:10px;
+}
+
+/* CARD */
 .card {
-background:white;padding:15px;margin:10px 0;
-border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,0.1);
+background:white;
+padding:12px;
+margin:8px 0;
+border-radius:10px;
+box-shadow:0 2px 6px rgba(0,0,0,0.1);
 }
 
-.hidden {display:none;}
-
-input,select {
-width:100%;padding:8px;margin:5px 0;
-}
-
-button.send {
-background:green;color:white;padding:10px;width:100%;
-}
-
+/* KPI */
 .kpi {
 display:grid;
-grid-template-columns:repeat(4,1fr);
+grid-template-columns:repeat(2,1fr);
 gap:10px;
 }
 
 .kpi div {
-background:white;padding:15px;border-radius:10px;
-text-align:center;font-weight:bold;
+background:white;
+padding:12px;
+border-radius:10px;
+text-align:center;
+font-weight:bold;
+font-size:14px;
 }
 
-table {
-width:100%;border-collapse:collapse;
+/* FORM */
+input, select {
+width:100%;
+padding:10px;
+margin:5px 0;
+font-size:16px;
 }
 
-th, td {
-padding:8px;border-bottom:1px solid #ddd;
+button.send {
+background:green;
+color:white;
+padding:12px;
+width:100%;
+border:none;
+border-radius:8px;
+font-size:16px;
+}
+
+/* CHART */
+canvas {
+max-height:250px !important;
+}
+
+/* HIDDEN */
+.hidden {
+display:none;
 }
 </style>
 </head>
@@ -60,18 +103,19 @@ padding:8px;border-bottom:1px solid #ddd;
 <body>
 
 <header>
-<h2>FleetTrack</h2>
+<h2>🚚 FleetTrack</h2>
 
 <nav>
 <button onclick="showPage('dashboard')">Dashboard</button>
 <button onclick="showPage('form')">Formulaire</button>
 <button onclick="showPage('history')">Historique</button>
-<a href="engins.html">➡️ Accéder aux engins</a>
+<a href="engins.html">Engins</a>
 </nav>
 </header>
 
 <div class="container">
 
+<!-- DASHBOARD -->
 <div id="dashboard">
 
 <h3>Vue d'ensemble</h3>
@@ -83,20 +127,7 @@ padding:8px;border-bottom:1px solid #ddd;
 <div id="kpiHeures">0h<br>Heures</div>
 </div>
 
-<div class="card">
-<h3>Réparations</h3>
-<table>
-<thead>
-<tr>
-<th>Camion</th>
-<th>Mécano</th>
-<th>Panne</th>
-<th>Statut</th>
-</tr>
-</thead>
-<tbody id="tableData"></tbody>
-</table>
-</div>
+<div id="tableData"></div>
 
 <div class="card"><canvas id="chart"></canvas></div>
 <div class="card"><canvas id="chartCamion"></canvas></div>
@@ -105,6 +136,7 @@ padding:8px;border-bottom:1px solid #ddd;
 
 </div>
 
+<!-- FORM -->
 <div id="form" class="hidden">
 <div class="card">
 
@@ -117,11 +149,11 @@ padding:8px;border-bottom:1px solid #ddd;
 
 <select id="vehicule"></select>
 
-<input id="marque" readonly>
-<input id="type" readonly>
+<input id="marque" readonly placeholder="Marque">
+<input id="type" readonly placeholder="Type">
 
 <input id="panne" placeholder="Panne">
-<input id="duree" placeholder="Durée">
+<input id="duree" placeholder="Durée (h)">
 
 <select id="priorite">
 <option>Basse</option>
@@ -139,6 +171,7 @@ padding:8px;border-bottom:1px solid #ddd;
 </div>
 </div>
 
+<!-- HISTORY -->
 <div id="history" class="hidden">
 <div id="historyData"></div>
 </div>
@@ -156,6 +189,7 @@ document.getElementById("history").style.display="none";
 document.getElementById(p).style.display="block";
 }
 
+/* CAMIONS */
 const camions = [
 ["GW-963-PN","IVECO","CELLULE"],
 ["FM-628-NX","RENAULT","CELLULE"],
@@ -187,7 +221,7 @@ const camions = [
 ["FC-171-XA","VOLVO","TRACTEUR"],
 ["HB-807-PM","VOLVO","CELLULE"],
 ["EV-985-YF","SCANIA","CELLULE"]
-];
+];;
 
 camions.forEach(c=>{
 let opt=document.createElement("option");
@@ -204,6 +238,7 @@ type.value=c[2];
 }
 });
 
+/* ENVOI */
 function envoyer(){
 
 fetch(URL+"?action=add"
@@ -221,8 +256,10 @@ alert("✅ Envoyé !");
 loadData();
 }
 
+/* CHARTS */
 let chartStatut, chartCamion, chartPanne, chartMecano;
 
+/* LOAD DATA */
 function loadData(){
 
 fetch(URL+"?action=get")
@@ -230,7 +267,7 @@ fetch(URL+"?action=get")
 .then(data=>{
 
 let html="";
-let hist=""; // ✅ AJOUT
+let hist="";
 let total=0, urgent=0, termine=0, heures=0;
 
 let statsCamion={}, statsPanne={}, statsMecano={};
@@ -242,22 +279,22 @@ let panne=data[i][5];
 let mecano=data[i][1];
 let duree=Number(data[i][7])||0;
 
-html+=`<tr>
-<td>${camion}</td>
-<td>${mecano}</td>
-<td>${panne}</td>
-<td>${data[i][11]}</td>
-</tr>`;
-
-// ✅ HISTORIQUE EN CARTE
-hist+=`
+/* CARTE MOBILE */
+html+=`
 <div class="card">
-🏗️ ${camion}<br>
+🚚 <b>${camion}</b><br>
 👨‍🔧 ${mecano}<br>
 🔧 ${panne}<br>
-⏱ ${duree}h<br>
-📌 ${data[i][6]}<br>
-📊 ${data[i][7]}
+📊 ${data[i][11]}
+</div>`;
+
+/* HISTORIQUE */
+hist+=`
+<div class="card">
+🚚 ${camion}<br>
+👨‍🔧 ${mecano}<br>
+🔧 ${panne}<br>
+⏱ ${duree}h
 </div>`;
 
 total++;
@@ -277,8 +314,6 @@ if(data[i][11]=="Terminé") statsMecano[mecano].d++;
 }
 
 tableData.innerHTML=html;
-
-// ✅ ON REMPLACE ICI
 historyData.innerHTML=hist;
 
 kpiTotal.innerHTML=total+"<br>Total";
@@ -286,11 +321,13 @@ kpiUrgent.innerHTML=urgent+"<br>Urgent";
 kpiTermine.innerHTML=termine+"<br>Terminé";
 kpiHeures.innerHTML=heures+"h<br>Heures";
 
+/* RESET CHART */
 if(chartStatut) chartStatut.destroy();
 if(chartCamion) chartCamion.destroy();
 if(chartPanne) chartPanne.destroy();
 if(chartMecano) chartMecano.destroy();
 
+/* CHARTS */
 chartStatut=new Chart(chart,{
 type:'doughnut',
 data:{labels:["En cours","Terminé"],datasets:[{data:[total-termine,termine]}]}

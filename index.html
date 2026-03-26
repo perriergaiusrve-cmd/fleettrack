@@ -1,4 +1,4 @@
-rajoute directement : <!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
@@ -66,13 +66,12 @@ padding:8px;border-bottom:1px solid #ddd;
 <button onclick="showPage('dashboard')">Dashboard</button>
 <button onclick="showPage('form')">Formulaire</button>
 <button onclick="showPage('history')">Historique</button>
-  <a href="engins.html">➡️ Accéder aux engins</a>
+<a href="engins.html">➡️ Accéder aux engins</a>
 </nav>
 </header>
 
 <div class="container">
 
-<!-- DASHBOARD -->
 <div id="dashboard">
 
 <h3>Vue d'ensemble</h3>
@@ -106,9 +105,7 @@ padding:8px;border-bottom:1px solid #ddd;
 
 </div>
 
-<!-- FORM -->
 <div id="form" class="hidden">
-
 <div class="card">
 
 <select id="mecanicien">
@@ -120,8 +117,8 @@ padding:8px;border-bottom:1px solid #ddd;
 
 <select id="vehicule"></select>
 
-<input id="marque" placeholder="Marque" readonly>
-<input id="type" placeholder="Type" readonly>
+<input id="marque" readonly>
+<input id="type" readonly>
 
 <input id="panne" placeholder="Panne">
 <input id="duree" placeholder="Durée">
@@ -140,10 +137,8 @@ padding:8px;border-bottom:1px solid #ddd;
 <button class="send" onclick="envoyer()">Envoyer</button>
 
 </div>
-
 </div>
 
-<!-- HISTORIQUE -->
 <div id="history" class="hidden">
 <div id="historyData"></div>
 </div>
@@ -152,9 +147,8 @@ padding:8px;border-bottom:1px solid #ddd;
 
 <script>
 
-const URL = "https://script.google.com/macros/s/AKfycbw0-vQc40kAKppwOGnPy9IP11t-eaMJGMcLc0pL5liDkkKWYuWthkblWHH-2Uk9FyGrRw/exec";
+const URL = "https://script.google.com/macros/s/AKfycbwvZelMZhtZJGZKAVUVJxKWmcqDlwEgIaU6Mut2SuYRh_6RxSiUnhcEeABtSJ_YZItnIQ/exec";
 
-// NAVIGATION
 function showPage(p){
 document.getElementById("dashboard").style.display="none";
 document.getElementById("form").style.display="none";
@@ -162,7 +156,6 @@ document.getElementById("history").style.display="none";
 document.getElementById(p).style.display="block";
 }
 
-// CAMIONS
 const camions = [
 ["GW-963-PN","IVECO","CELLULE"],
 ["FM-628-NX","RENAULT","CELLULE"],
@@ -211,7 +204,6 @@ type.value=c[2];
 }
 });
 
-// ENVOI
 function envoyer(){
 
 fetch(URL+"?action=add"
@@ -229,10 +221,8 @@ alert("✅ Envoyé !");
 loadData();
 }
 
-// GRAPHIQUES
 let chartStatut, chartCamion, chartPanne, chartMecano;
 
-// LOAD DATA
 function loadData(){
 
 fetch(URL+"?action=get")
@@ -240,6 +230,7 @@ fetch(URL+"?action=get")
 .then(data=>{
 
 let html="";
+let hist=""; // ✅ AJOUT
 let total=0, urgent=0, termine=0, heures=0;
 
 let statsCamion={}, statsPanne={}, statsMecano={};
@@ -257,60 +248,64 @@ html+=`<tr>
 <td>${panne}</td>
 <td>${data[i][11]}</td>
 </tr>`;
-  
+
+// ✅ HISTORIQUE EN CARTE
+hist+=`
+<div class="card">
+🏗️ ${camion}<br>
+👨‍🔧 ${mecano}<br>
+🔧 ${panne}<br>
+⏱ ${duree}h<br>
+📌 ${data[i][6]}<br>
+📊 ${data[i][7]}
+</div>`;
+
 total++;
 if(data[i][8]=="Urgente") urgent++;
 if(data[i][11]=="Terminé") termine++;
 heures+=duree;
 
-// CAMION
 if(!statsCamion[camion]) statsCamion[camion]=0;
 statsCamion[camion]++;
 
-// PANNE
 if(!statsPanne[panne]) statsPanne[panne]=0;
 statsPanne[panne]++;
 
-// MECANO
 if(!statsMecano[mecano]) statsMecano[mecano]={t:0,d:0};
 statsMecano[mecano].t++;
 if(data[i][11]=="Terminé") statsMecano[mecano].d++;
 }
 
 tableData.innerHTML=html;
-historyData.innerHTML=html;
 
-// KPI
+// ✅ ON REMPLACE ICI
+historyData.innerHTML=hist;
+
 kpiTotal.innerHTML=total+"<br>Total";
 kpiUrgent.innerHTML=urgent+"<br>Urgent";
 kpiTermine.innerHTML=termine+"<br>Terminé";
 kpiHeures.innerHTML=heures+"h<br>Heures";
 
-// DESTROY anciens graph
 if(chartStatut) chartStatut.destroy();
 if(chartCamion) chartCamion.destroy();
 if(chartPanne) chartPanne.destroy();
 if(chartMecano) chartMecano.destroy();
 
-// STATUT
 chartStatut=new Chart(chart,{
 type:'doughnut',
 data:{labels:["En cours","Terminé"],datasets:[{data:[total-termine,termine]}]}
 });
 
-// CAMION
 chartCamion=new Chart(chartCamion,{
 type:'bar',
 data:{labels:Object.keys(statsCamion),datasets:[{data:Object.values(statsCamion)}]}
 });
 
-// PANNE
 chartPanne=new Chart(chartPanne,{
 type:'pie',
 data:{labels:Object.keys(statsPanne),datasets:[{data:Object.values(statsPanne)}]}
 });
 
-// MECANO
 chartMecano=new Chart(chartMecano,{
 type:'bar',
 data:{

@@ -200,10 +200,11 @@ const kpiUrgent = document.getElementById("kpiUrgent");
 const kpiHeures = document.getElementById("kpiHeures");
 
 // NAV
-window.showPage = function(p){
-dashboard.style.display="none";
-form.style.display="none";
-history.style.display="none";
+function showPage(p){
+document.getElementById("dashboard").style.display="none";
+document.getElementById("form").style.display="none";
+document.getElementById("history").style.display="none";
+
 document.getElementById(p).style.display="block";
 }
 
@@ -219,12 +220,9 @@ const machines = [
 ["CHARIOT-26","Chariot élévateur"],
 ["CHARIOT-27","Chariot élévateur"],
 ["CHARIOT-28","Chariot élévateur"],
-
 ["CHARIOT-TELESCO","Chariot télescopique"],
-
 ["KUBOTA-R086","Chargeur"],
 ["KUBOTA-R090","Chargeur"],
-
 ["NACELLE-01","Nacelle"]
 ];
 

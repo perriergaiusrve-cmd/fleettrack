@@ -3,8 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>FleetTrack PRO</title>
+<title>FleetTrack ENGINS</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
@@ -13,35 +12,34 @@ body {
 font-family:Arial;
 margin:0;
 background:#f3f4f6;
+font-size:18px;
 }
 
 /* HEADER */
 header {
-background:#0f172a;
+background:#14532d;
 color:white;
 padding:15px;
-display:flex;
-flex-direction:column;
-gap:10px;
+text-align:center;
 }
 
+/* MENU */
 nav {
 display:flex;
 flex-wrap:wrap;
-gap:5px;
+gap:10px;
+justify-content:center;
+margin-top:10px;
 }
 
-nav button, nav a {
+nav button {
 flex:1;
-text-align:center;
-padding:10px;
+padding:12px;
+font-size:16px;
 border:none;
-background:#1e293b;
+background:#166534;
 color:white;
-border-radius:8px;
-cursor:pointer;
-font-size:14px;
-text-decoration:none;
+border-radius:10px;
 }
 
 /* CONTAINER */
@@ -49,21 +47,40 @@ text-decoration:none;
 padding:15px;
 }
 
-/* CARD */
+/* CARDS */
 .card {
 background:white;
 padding:15px;
 margin:10px 0;
 border-radius:12px;
-box-shadow:0 2px 6px rgba(0,0,0,0.1);
-font-size:14px;
-line-height:1.5;
+box-shadow:0 3px 8px rgba(0,0,0,0.1);
+}
+
+/* INPUTS */
+input, select {
+width:100%;
+padding:14px;
+margin:8px 0;
+font-size:18px;
+border-radius:8px;
+border:1px solid #ccc;
+}
+
+/* BOUTON */
+button.send {
+background:#22c55e;
+color:white;
+padding:16px;
+font-size:18px;
+border:none;
+border-radius:10px;
+width:100%;
 }
 
 /* KPI */
 .kpi {
 display:grid;
-grid-template-columns:repeat(2,1fr);
+grid-template-columns:1fr 1fr;
 gap:10px;
 }
 
@@ -75,55 +92,10 @@ text-align:center;
 font-weight:bold;
 }
 
-/* TABLE */
-.card table {
-display:block;
-overflow-x:auto;
-white-space:nowrap;
-width:100%;
+/* CACHE */
+.hidden {
+display:none;
 }
-
-th, td {
-padding:8px;
-border-bottom:1px solid #ddd;
-}
-
-/* FORM */
-input, select {
-width:100%;
-padding:12px;
-margin:8px 0;
-font-size:16px;
-border-radius:8px;
-border:1px solid #ccc;
-}
-
-button.send {
-background:green;
-color:white;
-padding:12px;
-width:100%;
-border:none;
-border-radius:8px;
-font-size:16px;
-}
-
-/* RESPONSIVE PC */
-@media(min-width:768px){
-
-header {
-flex-direction:row;
-justify-content:space-between;
-align-items:center;
-}
-
-.kpi {
-grid-template-columns:repeat(4,1fr);
-}
-
-}
-
-.hidden {display:none;}
 
 </style>
 </head>
@@ -131,13 +103,12 @@ grid-template-columns:repeat(4,1fr);
 <body>
 
 <header>
-<h2>FleetTrack</h2>
+<h2>🏗️ FleetTrack ENGINS</h2>
 
 <nav>
-<button onclick="showPage('dashboard')">Dashboard</button>
-<button onclick="showPage('form')">Formulaire</button>
-<button onclick="showPage('history')">Historique</button>
-<a href="engins.html">➡️ Engins</a>
+<button onclick="showPage('dashboard')">📊 Dashboard</button>
+<button onclick="showPage('form')">🛠 Intervention</button>
+<button onclick="showPage('history')">📋 Historique</button>
 </nav>
 </header>
 
@@ -146,34 +117,15 @@ grid-template-columns:repeat(4,1fr);
 <!-- DASHBOARD -->
 <div id="dashboard">
 
-<h3>Vue d'ensemble</h3>
-
 <div class="kpi">
 <div id="kpiTotal">0<br>Total</div>
 <div id="kpiUrgent">0<br>Urgent</div>
-<div id="kpiTermine">0<br>Terminé</div>
 <div id="kpiHeures">0h<br>Heures</div>
 </div>
 
 <div class="card">
-<h3>Réparations</h3>
-<table>
-<thead>
-<tr>
-<th>Camion</th>
-<th>Mécano</th>
-<th>Panne</th>
-<th>Statut</th>
-</tr>
-</thead>
-<tbody id="tableData"></tbody>
-</table>
+<canvas id="chart"></canvas>
 </div>
-
-<div class="card"><canvas id="chart"></canvas></div>
-<div class="card"><canvas id="chartCamion"></canvas></div>
-<div class="card"><canvas id="chartPanne"></canvas></div>
-<div class="card"><canvas id="chartMecano"></canvas></div>
 
 </div>
 
@@ -182,6 +134,7 @@ grid-template-columns:repeat(4,1fr);
 
 <div class="card">
 
+<label>👨‍🔧 Technicien</label>
 <select id="mecanicien">
 <option>Jean-François ROBERT</option>
 <option>Julian PAPOU</option>
@@ -189,26 +142,32 @@ grid-template-columns:repeat(4,1fr);
 <option>Gaïus PERRIER</option>
 </select>
 
-<select id="vehicule"></select>
+<label>🚜 Machine</label>
+<select id="machine"></select>
 
-<input id="marque" placeholder="Marque" readonly>
-<input id="type" placeholder="Type" readonly>
+<label>Type</label>
+<input id="type" readonly>
 
-<input id="panne" placeholder="Panne">
-<input id="duree" placeholder="Durée (h)">
+<label>🔧 Panne</label>
+<input id="panne" placeholder="Ex: fuite hydraulique">
 
+<label>⏱ Durée (h)</label>
+<input id="duree" placeholder="Ex: 2">
+
+<label>📌 Priorité</label>
 <select id="priorite">
 <option>Basse</option>
 <option>Moyenne</option>
 <option>Urgente</option>
 </select>
 
+<label>📊 Statut</label>
 <select id="statut">
 <option>En cours</option>
 <option>Terminé</option>
 </select>
 
-<button class="send" onclick="envoyer()">Envoyer</button>
+<button class="send" onclick="envoyer()">📤 Envoyer intervention</button>
 
 </div>
 
@@ -223,147 +182,143 @@ grid-template-columns:repeat(4,1fr);
 
 <script>
 
-const URL = "https://script.google.com/macros/s/AKfycbxctfgl9vxCbt6JD6RXvs3e4LcyEleUGpIGjjuM8DFkzOHwDnLbiSFcweoeOjEx84uc/exec";
+document.addEventListener("DOMContentLoaded", function(){
 
-/* NAVIGATION */
-function showPage(p){
-["dashboard","form","history"].forEach(id=>{
-document.getElementById(id).style.display="none";
-});
+const URL = "https://script.google.com/macros/s/AKfycbw8ai5Zy2g4BuyYr91nv7HI1f442o95h_0yIM-C3AIPJTfxRD2KefZqnGRfPVk6bi-X/exec";
+
+// ELEMENTS
+const machine = document.getElementById("machine");
+const type = document.getElementById("type");
+const mecanicien = document.getElementById("mecanicien");
+const panne = document.getElementById("panne");
+const duree = document.getElementById("duree");
+const priorite = document.getElementById("priorite");
+const statut = document.getElementById("statut");
+const historyData = document.getElementById("historyData");
+const kpiTotal = document.getElementById("kpiTotal");
+const kpiUrgent = document.getElementById("kpiUrgent");
+const kpiHeures = document.getElementById("kpiHeures");
+
+// NAV
+window.showPage = function(p){
+dashboard.style.display="none";
+form.style.display="none";
+history.style.display="none";
 document.getElementById(p).style.display="block";
 }
 
-/* CAMIONS */
-const camions = [
-["GW-963-PN","IVECO","CELLULE"],
-["FM-628-NX","RENAULT","CELLULE"],
-["FV-833-WC","VOLVO","AMPLIROLL + G"]
+// MACHINES
+const machines = [
+["CHARIOT-19","Chariot élévateur"],
+["CHARIOT-20","Chariot élévateur"],
+["CHARIOT-21","Chariot élévateur"],
+["CHARIOT-22","Chariot élévateur"],
+["CHARIOT-23","Chariot élévateur"],
+["CHARIOT-24","Chariot élévateur"],
+["CHARIOT-25","Chariot élévateur"],
+["CHARIOT-26","Chariot élévateur"],
+["CHARIOT-27","Chariot élévateur"],
+["CHARIOT-28","Chariot élévateur"],
+
+["CHARIOT-TELESCO","Chariot télescopique"],
+
+["KUBOTA-R086","Chargeur"],
+["KUBOTA-R090","Chargeur"],
+
+["NACELLE-01","Nacelle"]
 ];
 
-camions.forEach(c=>{
+// REMPLISSAGE
+machines.forEach(m=>{
 let opt=document.createElement("option");
-opt.value=c[0];
-opt.textContent=c[0];
-vehicule.appendChild(opt);
+opt.value=m[0];
+opt.textContent="🚜 "+m[0]+" ("+m[1]+")";
+machine.appendChild(opt);
 });
 
-vehicule.addEventListener("change", ()=>{
-let c=camions.find(x=>x[0]===vehicule.value);
-if(c){
-marque.value=c[1];
-type.value=c[2];
-}
+// AUTO TYPE
+machine.addEventListener("change", ()=>{
+let m=machines.find(x=>x[0]===machine.value);
+if(m){ type.value=m[1]; }
 });
 
-/* ENVOI */
-function envoyer(){
+machine.selectedIndex = 0;
+type.value = machines[0][1];
 
-fetch(URL+"?action=add"
+// ENVOI
+window.envoyer = function(){
+
+const url = URL+"?action=add"
 +"&mecanicien="+encodeURIComponent(mecanicien.value)
-+"&vehicule="+encodeURIComponent(vehicule.value)
-+"&marque="+encodeURIComponent(marque.value)
++"&machine="+encodeURIComponent(machine.value)
 +"&type="+encodeURIComponent(type.value)
 +"&panne="+encodeURIComponent(panne.value)
 +"&duree="+encodeURIComponent(duree.value)
 +"&priorite="+priorite.value
-+"&statut="+statut.value
-);
++"&statut="+statut.value;
 
+fetch(url)
+.then(res=>res.text())
+.then(()=>{
 alert("✅ Envoyé !");
+navigator.vibrate(100);
 loadData();
+})
+.catch(()=>{
+alert("❌ Erreur !");
+});
 }
 
-/* GRAPHIQUES */
-let chartStatut, chartCamion, chartPanne, chartMecano;
+// LOAD
+let chart;
 
-/* LOAD DATA */
 function loadData(){
 
 fetch(URL+"?action=get")
 .then(r=>r.json())
 .then(data=>{
 
-let html="";
+let total=0, urgent=0, heures=0;
 let hist="";
-let total=0, urgent=0, termine=0, heures=0;
-
-let statsCamion={}, statsPanne={}, statsMecano={};
+let stats={};
 
 for(let i=1;i<data.length;i++){
 
-let camion=data[i][2];
-let panne=data[i][5];
-let mecano=data[i][1];
-let duree=Number(data[i][7])||0;
+let machineName=data[i][2];
+let panne=data[i][4];
+let dureeVal=Number(data[i][5])||0;
 
-html+=`<tr>
-<td>${camion}</td>
-<td>${mecano}</td>
-<td>${panne}</td>
-<td>${data[i][11]}</td>
-</tr>`;
+total++;
+if(data[i][6]=="Urgente") urgent++;
+heures+=dureeVal;
+
+if(!stats[machineName]) stats[machineName]=0;
+stats[machineName]++;
 
 hist+=`
 <div class="card">
-🏗️ ${camion}<br>
-👨‍🔧 ${mecano}<br>
+🏗️ <b>${machineName}</b><br>
+👨‍🔧 ${data[i][1]}<br>
 🔧 ${panne}<br>
-⏱ ${duree}h<br>
+⏱ ${dureeVal}h<br>
 📌 ${data[i][6]}<br>
 📊 ${data[i][7]}
 </div>`;
-
-total++;
-if(data[i][8]=="Urgente") urgent++;
-if(data[i][11]=="Terminé") termine++;
-heures+=duree;
-
-if(!statsCamion[camion]) statsCamion[camion]=0;
-statsCamion[camion]++;
-
-if(!statsPanne[panne]) statsPanne[panne]=0;
-statsPanne[panne]++;
-
-if(!statsMecano[mecano]) statsMecano[mecano]={t:0,d:0};
-statsMecano[mecano].t++;
-if(data[i][11]=="Terminé") statsMecano[mecano].d++;
 }
 
-tableData.innerHTML=html;
 historyData.innerHTML=hist;
 
 kpiTotal.innerHTML=total+"<br>Total";
 kpiUrgent.innerHTML=urgent+"<br>Urgent";
-kpiTermine.innerHTML=termine+"<br>Terminé";
 kpiHeures.innerHTML=heures+"h<br>Heures";
 
-if(chartStatut) chartStatut.destroy();
-if(chartCamion) chartCamion.destroy();
-if(chartPanne) chartPanne.destroy();
-if(chartMecano) chartMecano.destroy();
+if(chart) chart.destroy();
 
-chartStatut=new Chart(chart,{
-type:'doughnut',
-data:{labels:["En cours","Terminé"],datasets:[{data:[total-termine,termine]}]}
-});
-
-chartCamion=new Chart(chartCamion,{
-type:'bar',
-data:{labels:Object.keys(statsCamion),datasets:[{data:Object.values(statsCamion)}]}
-});
-
-chartPanne=new Chart(chartPanne,{
-type:'pie',
-data:{labels:Object.keys(statsPanne),datasets:[{data:Object.values(statsPanne)}]}
-});
-
-chartMecano=new Chart(chartMecano,{
+chart=new Chart(document.getElementById("chart"),{
 type:'bar',
 data:{
-labels:Object.keys(statsMecano),
-datasets:[{
-data:Object.values(statsMecano).map(m=>Math.round((m.d/m.t)*100))
-}]
+labels:Object.keys(stats),
+datasets:[{data:Object.values(stats)}]
 }
 });
 
@@ -371,6 +326,8 @@ data:Object.values(statsMecano).map(m=>Math.round((m.d/m.t)*100))
 }
 
 loadData();
+
+});
 
 </script>
 

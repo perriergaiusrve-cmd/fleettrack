@@ -37,6 +37,10 @@ color:white;
 border-radius:10px;
 }
 
+nav button.refresh {
+background:#22c55e;
+}
+
 .container {
 padding:15px;
 }
@@ -98,6 +102,7 @@ display:none;
 <button onclick="showPage('dashboard')">📊</button>
 <button onclick="showPage('form')">🛠</button>
 <button onclick="showPage('history')">📋</button>
+<button class="refresh" onclick="loadData()">🔄</button>
 </nav>
 
 <div class="container">
@@ -168,7 +173,6 @@ document.addEventListener("DOMContentLoaded", function(){
 
 const URL = "https://script.google.com/macros/s/AKfycbywaBVIk-xh7tgWBwHQR4oDLwN75jFSCxWBlQcOIvwmyuLKpZpAA5EPAqUQVXcV-u27/exec";
   
-// ELEMENTS
 const machine = document.getElementById("machine");
 const type = document.getElementById("type");
 const mecanicien = document.getElementById("mecanicien");
@@ -181,7 +185,6 @@ const kpiTotal = document.getElementById("kpiTotal");
 const kpiUrgent = document.getElementById("kpiUrgent");
 const kpiHeures = document.getElementById("kpiHeures");
 
-// NAVIGATION FIX
 window.showPage = function(p){
 document.getElementById("dashboard").style.display = "none";
 document.getElementById("form").style.display = "none";
@@ -191,7 +194,6 @@ document.getElementById(p).style.display = "block";
 window.scrollTo(0,0);
 }
 
-// MACHINES
 const machines = [
 ["CHARIOT-19","Chariot élévateur"],
 ["CHARIOT-20","Chariot élévateur"],
@@ -209,7 +211,6 @@ const machines = [
 ["NACELLE-01","Nacelle"]
 ];
 
-// SELECT
 machines.forEach(m=>{
 let opt=document.createElement("option");
 opt.value=m[0];
@@ -217,7 +218,6 @@ opt.textContent=m[0]+" • "+m[1];
 machine.appendChild(opt);
 });
 
-// AUTO TYPE
 machine.addEventListener("change", ()=>{
 let m=machines.find(x=>x[0]===machine.value);
 if(m){ type.value=m[1]; }
@@ -226,7 +226,6 @@ if(m){ type.value=m[1]; }
 machine.selectedIndex = 0;
 type.value = machines[0][1];
 
-// ENVOI FIX
 window.envoyer = function(){
 
 const url = URL+"?action=add"
@@ -250,10 +249,9 @@ alert("❌ Erreur !");
 
 }
 
-// LOAD
 let chart;
 
-function loadData(){
+window.loadData = function(){
 
 fetch(URL+"?action=get")
 .then(r=>r.json())

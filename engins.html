@@ -7,88 +7,19 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-body {
-font-family:Arial;
-margin:0;
-background:#f3f4f6;
-font-size:18px;
-}
-
-header {
-background:#14532d;
-color:white;
-padding:15px;
-text-align:center;
-}
-
-nav {
-display:flex;
-gap:10px;
-padding:10px;
-}
-
-nav button {
-flex:1;
-padding:12px;
-font-size:16px;
-border:none;
-background:#166534;
-color:white;
-border-radius:10px;
-}
-
-nav button.refresh {
-background:#22c55e;
-}
-
-.container {
-padding:15px;
-}
-
-.card {
-background:white;
-padding:15px;
-margin:10px 0;
-border-radius:12px;
-box-shadow:0 3px 8px rgba(0,0,0,0.1);
-}
-
-input, select {
-width:100%;
-padding:14px;
-margin:8px 0;
-font-size:18px;
-border-radius:8px;
-border:1px solid #ccc;
-}
-
-button.send {
-background:#22c55e;
-color:white;
-padding:16px;
-font-size:18px;
-border:none;
-border-radius:10px;
-width:100%;
-}
-
-.kpi {
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:10px;
-}
-
-.kpi div {
-background:white;
-padding:15px;
-border-radius:10px;
-text-align:center;
-font-weight:bold;
-}
-
-.hidden {
-display:none;
-}
+body {font-family:Arial;margin:0;background:#f3f4f6;font-size:18px;}
+header {background:#14532d;color:white;padding:15px;text-align:center;}
+nav {display:flex;gap:10px;padding:10px;}
+nav button {flex:1;padding:12px;font-size:16px;border:none;background:#166534;color:white;border-radius:10px;}
+nav button.refresh {background:#22c55e;}
+.container {padding:15px;}
+.card {background:white;padding:15px;margin:10px 0;border-radius:12px;box-shadow:0 3px 8px rgba(0,0,0,0.1);}
+input, select {width:100%;padding:14px;margin:8px 0;font-size:18px;border-radius:8px;border:1px solid #ccc;}
+button.send {background:#22c55e;color:white;padding:16px;font-size:18px;border:none;border-radius:10px;width:100%;}
+.kpi {display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.kpi div {background:white;padding:15px;border-radius:10px;text-align:center;font-weight:bold;}
+.hidden {display:none;}
+.urgent {background:#fee2e2;}
 </style>
 </head>
 
@@ -107,9 +38,7 @@ display:none;
 
 <div class="container">
 
-<!-- DASHBOARD -->
 <div id="dashboard">
-
 <div class="kpi">
 <div id="kpiTotal">0<br>Total</div>
 <div id="kpiUrgent">0<br>Urgent</div>
@@ -119,12 +48,9 @@ display:none;
 <div class="card">
 <canvas id="chart"></canvas>
 </div>
-
 </div>
 
-<!-- FORM -->
 <div id="form" class="hidden">
-
 <div class="card">
 
 <label>Technicien</label>
@@ -141,7 +67,7 @@ display:none;
 <input id="type" readonly>
 
 <input id="panne" placeholder="Panne">
-<input id="duree" placeholder="Durée (heures)">
+<input id="duree" placeholder="Durée (h)">
 
 <select id="priorite">
 <option>Basse</option>
@@ -157,10 +83,8 @@ display:none;
 <button class="send" onclick="envoyer()">Envoyer</button>
 
 </div>
-
 </div>
 
-<!-- HISTORIQUE -->
 <div id="history" class="hidden">
 <div id="historyData"></div>
 </div>
@@ -171,7 +95,7 @@ display:none;
 
 document.addEventListener("DOMContentLoaded", function(){
 
-const URL = "https://script.google.com/macros/s/AKfycbzmR2IP9FfILcpBo0T0jIH0WBFNM6LOEq_hcDESbmHSkm2SBu8TqDJRdLeMVTubio2J/exec";
+const URL = "https://script.google.com/macros/s/AKfycbwQrvl8XYeqZOlQK7qV7snTWIM-w69MZ4mX0d8_j9qiPCU5bgcpcfQlcSn5-bIvSAfL/exec";
 
 const machine = document.getElementById("machine");
 const type = document.getElementById("type");
@@ -186,13 +110,13 @@ const kpiUrgent = document.getElementById("kpiUrgent");
 const kpiHeures = document.getElementById("kpiHeures");
 
 window.showPage = function(p){
-document.getElementById("dashboard").style.display = "none";
-document.getElementById("form").style.display = "none";
-document.getElementById("history").style.display = "none";
-document.getElementById(p).style.display = "block";
-window.scrollTo(0,0);
+["dashboard","form","history"].forEach(id=>{
+document.getElementById(id).style.display="none";
+});
+document.getElementById(p).style.display="block";
 }
 
+// 🔥 LISTE COMPLETE DES ENGINS
 const machines = [
 ["CHARIOT-19","Chariot élévateur"],
 ["CHARIOT-20","Chariot élévateur"],
@@ -232,27 +156,20 @@ alert("Remplis tous les champs !");
 return;
 }
 
-const url = URL+"?action=add"
+fetch(URL+"?action=add"
 +"&mecanicien="+encodeURIComponent(mecanicien.value)
 +"&machine="+encodeURIComponent(machine.value)
 +"&type="+encodeURIComponent(type.value)
 +"&panne="+encodeURIComponent(panne.value)
 +"&duree="+encodeURIComponent(duree.value)
 +"&priorite="+priorite.value
-+"&statut="+statut.value;
-
-fetch(url)
-.then(res=>res.text())
++"&statut="+statut.value)
 .then(()=>{
 alert("✅ Envoyé !");
 panne.value="";
 duree.value="";
 loadData();
-})
-.catch(()=>{
-alert("❌ Erreur !");
 });
-
 }
 
 let chart;
@@ -264,26 +181,29 @@ fetch(URL+"?action=get")
 .then(data=>{
 
 let total=0, urgent=0, heures=0;
-let hist="";
-let stats={};
+let stats={}, hist="";
 
-for(let i=1;i<data.length;i++){
+for(let i=data.length-1;i>=1;i--){
 
-let mecanicien = data[i][1];
-let machineName = data[i][2];
-let panneVal = data[i][4];
-let dureeVal = Number(data[i][5]) || 0;
-let prioriteVal = data[i][6];
+let mecanicien=data[i][1];
+let machineName=data[i][2];
+let panneVal=data[i][4];
+let dureeVal=Number(data[i][5])||0;
+let prioriteVal=data[i][6];
+let date=data[i][0];
 
 total++;
-if(prioriteVal === "Urgente") urgent++;
-heures += dureeVal;
+if(prioriteVal==="Urgente") urgent++;
+heures+=dureeVal;
 
 if(!stats[machineName]) stats[machineName]=0;
 stats[machineName]++;
 
-hist += `
-<div class="card">
+let cls = prioriteVal==="Urgente" ? "card urgent":"card";
+
+hist+=`
+<div class="${cls}">
+📅 ${date}<br>
 🏗️ ${machineName}<br>
 👨‍🔧 ${mecanicien}<br>
 🔧 ${panneVal}<br>
@@ -291,15 +211,15 @@ hist += `
 </div>`;
 }
 
-historyData.innerHTML = hist;
+historyData.innerHTML=hist;
 
-kpiTotal.innerHTML = total+"<br>Total";
-kpiUrgent.innerHTML = urgent+"<br>Urgent";
-kpiHeures.innerHTML = heures+"h<br>Heures";
+kpiTotal.innerHTML=total+"<br>Total";
+kpiUrgent.innerHTML=urgent+"<br>Urgent";
+kpiHeures.innerHTML=heures+"h<br>Heures";
 
 if(chart) chart.destroy();
 
-chart = new Chart(document.getElementById("chart"),{
+chart=new Chart(document.getElementById("chart"),{
 type:'bar',
 data:{
 labels:Object.keys(stats),
@@ -307,18 +227,9 @@ datasets:[{
 label:"Interventions",
 data:Object.values(stats)
 }]
-},
-options:{
-responsive:true,
-plugins:{
-legend:{display:false}
-}
 }
 });
 
-})
-.catch(()=>{
-alert("❌ Erreur chargement données");
 });
 
 }

@@ -318,26 +318,39 @@ let panne=data[i][5];
 let mecano=data[i][1];
 let duree=Number(data[i][7])||0;
 
-html+=`
+for(let i=1;i<data.length;i++){
+
+let date = new Date(data[i][0]).toLocaleDateString('fr-FR');
+let camion = data[i][2];
+let panne = data[i][5];
+let mecano = data[i][1];
+let duree = Number(data[i][7]) || 0;
+
+html += `
 <div class="card">
+📅 ${date}<br>
 🚚 <b>${camion}</b><br>
 👨‍🔧 ${mecano}<br>
 🔧 ${panne}<br>
+⏱ ${duree} h<br>
 📊 ${data[i][11]}
 </div>`;
 
-hist+=`
+hist += `
 <div class="card">
+📅 ${date}<br>
 🚚 ${camion}<br>
 👨‍🔧 ${mecano}<br>
 🔧 ${panne}<br>
-⏱ ${duree}h
+⏱ ${duree} h<br>
+📊 ${data[i][11]}
 </div>`;
 
 total++;
+
 if(data[i][8]=="Urgente") urgent++;
 if(data[i][11]=="Terminé") termine++;
-heures+=duree;
+heures += duree;
 
 if(!statsCamion[camion]) statsCamion[camion]=0;
 statsCamion[camion]++;
@@ -347,6 +360,7 @@ statsPanne[panne]++;
 
 if(!statsMecano[mecano]) statsMecano[mecano]={t:0,d:0};
 statsMecano[mecano].t++;
+
 if(data[i][11]=="Terminé") statsMecano[mecano].d++;
 }
 

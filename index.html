@@ -407,6 +407,32 @@ type:'pie',
 data:{labels:Object.keys(statsPanne),datasets:[{data:Object.values(statsPanne)}]}
 });
 
+chartTempsCamion = new Chart(chartTempsCamion,{
+type:'bar',
+data:{
+labels:Object.keys(statsTempsCamion),
+datasets:[{
+label:'Heures d\'intervention',
+data:Object.values(statsTempsCamion)
+}]
+},
+options:{
+responsive:true,
+indexAxis:'y',
+plugins:{
+title:{
+display:true,
+text:'Temps total d\'intervention par camion'
+}
+},
+scales:{
+x:{
+beginAtZero:true
+}
+}
+}
+});
+
 chartMecano=new Chart(chartMecano,{
 type:'bar',
 data:{

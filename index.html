@@ -313,14 +313,7 @@ let statsCamion={}, statsPanne={}, statsMecano={};
 
 for(let i=1;i<data.length;i++){
 
-let camion=data[i][2];
-let panne=data[i][5];
-let mecano=data[i][1];
-let duree=Number(data[i][7])||0;
-
-for(let i=1;i<data.length;i++){
-
-let date = new Date(data[i][0]).toLocaleDateString('fr-FR');
+let date = data[i][0];
 let camion = data[i][2];
 let panne = data[i][5];
 let mecano = data[i][1];
@@ -350,6 +343,7 @@ total++;
 
 if(data[i][8]=="Urgente") urgent++;
 if(data[i][11]=="Terminé") termine++;
+
 heures += duree;
 
 if(!statsCamion[camion]) statsCamion[camion]=0;

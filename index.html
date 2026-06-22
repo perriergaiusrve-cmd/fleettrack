@@ -373,9 +373,28 @@ if(chartPanne) chartPanne.destroy();
 if(chartMecano) chartMecano.destroy();
 
 /* CHARTS */
-chartStatut=new Chart(chart,{
-type:'doughnut',
-data:{labels:["En cours","Terminé"],datasets:[{data:[total-termine,termine]}]}
+chartStatut = new Chart(chart,{
+type:'bar',
+data:{
+labels:Object.keys(statsCamion),
+datasets:[{
+label:'Nombre d\'interventions',
+data:Object.values(statsCamion)
+}]
+},
+options:{
+responsive:true,
+plugins:{
+legend:{
+display:true
+}
+},
+scales:{
+y:{
+beginAtZero:true
+}
+}
+}
 });
 
 chartCamion=new Chart(chartCamion,{
